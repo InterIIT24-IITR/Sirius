@@ -34,5 +34,5 @@ vector_server = VectorStoreServer(
     splitter=text_splitter,
 )
 vector_server.run_server(
-    host=PATHWAY_HOST, port=PATHWAY_PORT, threaded=True, with_cache=False
+    host=PATHWAY_HOST, port=PATHWAY_PORT, threaded=False, with_cache=False
 )
