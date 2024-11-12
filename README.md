@@ -35,6 +35,12 @@ Multi-Agent tool for answering your queries specialising in knowledge queries in
 ## Setup
 Following setup is for Linux Machines, see the Windows Setup subheading for the relevant changes
 
+Config (.env)
+```sh
+OPENAI_API_KEY="Your secret openai api key"
+COHERE_API_KEY="Your secret cohere api key"
+```
+
 Environment
 ```sh
 python -m venv venv
