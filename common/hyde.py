@@ -1,11 +1,11 @@
-import openai
 from rag.client import retrieve_documents
+from langchain_openai import ChatOpenAI
+
 
 def hyde_query(query):
-    hypothetical_doc = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=f"Write a detailed explanation or passage on: '{query}'",
-        max_tokens=150
-    ).choices[0].text.strip()
+    llm = ChatOpenAI(model="gpt-4o-mini")
+    hypothetical_doc = llm.invoke(
+        f"Write a detailed explanation or passage on: '{query}'"
+    ).content
 
     return hypothetical_doc
