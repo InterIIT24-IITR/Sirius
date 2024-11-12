@@ -10,7 +10,7 @@ def rerank_docs(query, dat_arr):
         query=query,
         documents=dat_arr,
         rank_fields=["text"],
-        top_n=10,
+        top_n=3,
         return_documents=True,
     )
     return results

@@ -21,12 +21,12 @@ agent = Agent(
     ],
 )
 
+input_prompt = input("Ask a question: ")
 
 messages = [
     {
         "role": "user",
-        "content": "What are the respective proportion of cost of revenue as a percentage of revenue in 2018 and 2019 of quicklogic?",
-        # "content": "How to make samosas ?",
+        "content": input_prompt,
     }
 ]
 

@@ -11,5 +11,5 @@ client = VectorStoreClient(
 
 
 def retrieve_documents(query: str):
-    documents = client.query(query, k=5)
+    documents = client.query(query, k=3)
     return documents
