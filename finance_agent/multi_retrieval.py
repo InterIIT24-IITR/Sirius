@@ -2,12 +2,29 @@ from common.hyde import hyde_query
 from rag.client import retrieve_documents
 from common.reranker import rerank_docs
 from langchain_openai import ChatOpenAI
-from common.planrag import planrag_query
-from finance_agent.single_retrieval import single_retriever_finance_agent
+from common.plan_rag import plan_rag_query
+
+def single_retriever_finance_agent(query):
+    """For simple finance related queries, run them through HyDe and then retrieve the documents"""
+
+    modified_query = hyde_query(query)
+    documents = retrieve_documents(modified_query)
+
+    result = rerank_docs(modified_query, documents)
+
+    documentlist = [doc.document.text for doc in result.results]
+    context = "\n\n".join(documentlist)
+    prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'.
+                You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
+            """
+    llm = ChatOpenAI(model="gpt-4o-mini")
+    response = llm.invoke(prompt).content
+
+    return documents, response
 
 def multi_retrieval_finance_agent(query):
     """Answer complex finance related queries by running them through a multi-retrieval process based on PlanRAG"""
-    plan = planrag_query(query, "finance")
+    plan = plan_rag_query(query, "finance")
     documents = []
     response = []
     for step in plan.split("\n"):
@@ -26,8 +43,6 @@ def multi_retrieval_finance_agent(query):
             documents.extend(docs)
             response.append(resp)
             print(len(documents))
-    
-    # modified_query = hyde_query(query) # For the complex query, do we need HyDE?
 
     result = rerank_docs(query, documents) 
 
