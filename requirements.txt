@@ -114,6 +114,7 @@ langchain-core==0.1.30
 langchain-text-splitters==0.0.2
 langsmith==0.1.142
 linkify-it-py==2.0.3
+linkup-sdk==0.1.8
 litellm==1.42.12
 llama-cloud==0.1.4
 llama-index==0.11.23
@@ -212,6 +213,7 @@ rich==13.9.4
 rpds-py==0.20.0
 rsa==4.9
 s3transfer==0.10.3
+safetensors==0.4.5
 scikit-learn==1.5.2
 scipy==1.14.1
 seaborn==0.13.2
@@ -229,6 +231,7 @@ stack-data==0.6.3
 striprtf==0.0.26
 swarm @ git+https://github.com/openai/swarm.git@9db581cecaacea0d46a933d6453c312b034dbf47
 sympy==1.12
+tavily-python==0.5.0
 tenacity==8.5.0
 terminado==0.18.1
 threadpoolctl==3.5.0
@@ -239,6 +242,7 @@ torch==2.4.1+cpu
 tornado==6.4.1
 tqdm==4.67.0
 traitlets==5.14.3
+transformers==4.46.3
 typer==0.13.0
 types-python-dateutil==2.9.0.20240906
 types-requests==2.32.0.20241016
