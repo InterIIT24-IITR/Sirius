@@ -1,6 +1,6 @@
 from pathway.xpacks.llm.vector_store import VectorStoreClient
 
-PATHWAY_PORT = 8123
+PATHWAY_PORT = 8765
 PATHWAY_HOST = "127.0.0.1"
 # PATHWAY_HOST = "3.6.115.182"
 
