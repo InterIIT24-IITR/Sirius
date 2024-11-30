@@ -1,5 +1,4 @@
 from swarm import Agent
-from common.general_agent import transfer_to_general_agent
 from legal_agent.single_retrieval import single_retrieval_legal_agent
 from legal_agent.multi_retrieval import multi_retrieval_legal_agent
 

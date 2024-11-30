@@ -5,19 +5,15 @@ from langchain_openai import ChatOpenAI
 
 
 def single_retrieval_finance_agent(query):
-    """Answer simple finance related queries by running them through HyDe and then Retrieving the documents"""
+    """Answer simple finance related queries by running them through HyDe and then retrieve the documents"""
 
     modified_query = hyde_query(query)
     documents = retrieve_documents(modified_query)
-    # print(documents)
 
     result = rerank_docs(modified_query, documents)
-    # print("asdfasdf >>>>> ", result.results[0].document.text)
     documents = [doc.document.text for doc in result.results]
     context = "\n\n".join(documents)
-    #     retrieved_contexts = [doc["text"] for doc in documents]
-    #     context = "\n\n".join(retrieved_contexts)
-    #     print("context >>>>> ", context)
+
     prompt = f"""You are a helpful chat assistant that helps answer query based on the given context.
             You will answer queries only on the basis of the following information: {context}
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
@@ -30,7 +26,7 @@ def single_retrieval_finance_agent(query):
     return response
 
 def single_retriever_finance_agent(query):
-    """For simple finance related queries, run them through HyDe and then retrieve the documents"""
+    """For simple finance related queries, run them through HyDe and then retrieve the documents and return the response and documents"""
 
     modified_query = hyde_query(query)
     documents = retrieve_documents(modified_query)
@@ -41,7 +37,8 @@ def single_retriever_finance_agent(query):
     context = "\n\n".join(documentlist)
     prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'.
                 You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
-            """
+                You should ensure that the summary is clear and contains data relevant to the query.
+                """
     llm = ChatOpenAI(model="gpt-4o-mini")
     response = llm.invoke(prompt).content
 
