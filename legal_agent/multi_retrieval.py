@@ -19,6 +19,8 @@ def single_retriever_legal_agent(query):
     llm = ChatOpenAI(model="gpt-4o-mini")
     response = llm.invoke(prompt).content
 
+    documents = metrag_filter(documents, query, finance)
+
     return documents, response
   
 def multi_retrieval_legal_agent(query):

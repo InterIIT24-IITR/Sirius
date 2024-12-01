@@ -1,7 +1,9 @@
 from langchain_openai import ChatOpenAI
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
-def metrag_score(document, query, agent = "finance"):
+METRAG_THRESHOLD = 0.75
+
+def metrag_score(document, query, agent):
     llm_utility = ChatOpenAI(model="gpt-4o-mini")
     good_utility = "The document is absolutely outstanding and exceeds expectations in addressing the query. It is exceptionally relevant, brilliantly complete, impeccably accurate, and presented with crystal-clear clarity. Its consistency is flawless, making it an invaluable and extraordinary resource of immense utility!"
     bad_utility = "The document is utterly disappointing and fails to meet even basic expectations in addressing the query. It lacks relevance, is incomplete, riddled with inaccuracies, and confusingly presented. Its inconsistency undermines any potential value, making it a frustrating and entirely unhelpful resource."
@@ -34,3 +36,7 @@ def metrag_score(document, query, agent = "finance"):
         
     response = llm_utility.invoke(prompt).content
     return SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
+
+
+def metrag_filter(documents, query, agent):
+    return [doc in documents if metrag_score(doc, query, agent) > METRAG_THRESHOLD]

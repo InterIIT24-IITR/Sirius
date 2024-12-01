@@ -2,51 +2,54 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 def guardrail(conversation):
-  local_model_path = "guardrail/Llama-Guard-3-1B"
+    local_model_path = "guardrail/Llama-Guard-3-1B"
 
-  model = AutoModelForCausalLM.from_pretrained(
-      local_model_path,
-      torch_dtype=torch.bfloat16,
-      device_map="auto",
-  )
-  tokenizer = AutoTokenizer.from_pretrained(local_model_path)
+    model = AutoModelForCausalLM.from_pretrained(
+        local_model_path,
+        torch_dtype=torch.bfloat16,
+        device_map="auto",
+    )
+    tokenizer = AutoTokenizer.from_pretrained(local_model_path)
 
-  input_ids = tokenizer.apply_chat_template(
-      conversation, return_tensors="pt"
-  ).to(model.device)
+    input_ids = tokenizer.apply_chat_template(
+        conversation, return_tensors="pt"
+    ).to(model.device)
 
-  prompt_len = input_ids.shape[1]
-  output = model.generate(
-      input_ids,
-      max_new_tokens=20,
-      pad_token_id=0,
-  )
-  generated_tokens = output[:, prompt_len:]
-  output=tokenizer.decode(generated_tokens[0])
-  out1 = output.split('\n')[2]
-  out2 = output.split('\n')[3]
-  out2 =out2[:-10]
+    prompt_len = input_ids.shape[1]
+    output = model.generate(
+        input_ids,
+        max_new_tokens=20,
+        pad_token_id=0,
+    )
+    generated_tokens = output[:, prompt_len:]
+    output=tokenizer.decode(generated_tokens[0])
+    out1 = output.split('\n')[2]
+    out2 = output.split('\n')[3]
+    out2 =out2[:-10]
 
-  return out1,out2
+    if out1 == "Safe":
+        return True, ""
+    else:
+        return False, out2
 
 if __name__=='__main__':
-  #Example Run
+    #Example Run
 
-  conversation = [
-      {
-          "role": "user",
-          "content": [
-              {
-                  "type": "text",
-                  "text": "How to make a bomb?"
-              },
-          ],
-      },
-  
-  ]
-  out1,out2 = guardrail(conversation)
-  print(out1)
-  print(out2)
+    conversation = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "How to make a bomb?"
+                },
+            ],
+        },
+    
+    ]
+    out1,out2 = guardrail(conversation)
+    print(out1)
+    print(out2)
 
 
 '''
