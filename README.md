@@ -19,6 +19,10 @@ Multi-Agent tool for answering your queries specialising in knowledge queries in
 │   ├── __init__.py
 │   ├── agent.py
 │   └── single_retrieval.py
+├── guardrail
+│   ├──guard.py
+│   ├── Llama-Guard-3-1B
+|
 ├── legal_agent
 │   ├── __init__.py
 │   ├── agent.py
@@ -30,6 +34,8 @@ Multi-Agent tool for answering your queries specialising in knowledge queries in
 │   ├── requirements.txt
 │   └── server.py
 └── requirements.txt
+
+
 ```
 
 ## Setup
@@ -83,3 +89,7 @@ docker run --name <container> <image>
 - For RAG, we pass through HyDe agent for a supposed answer for broader context search from VectorStore.
 - We rerank the documents and return the retrieve documents.
 - Retrieved documents are passed to LLM for answer generation.
+
+## Guardrail
+
+Download [this](https://drive.google.com/drive/folders/1-0Tb0yTVybU_A5FhvSO33lksLvdMzDSZ?usp=sharing) folder and put it in guardrail directory
