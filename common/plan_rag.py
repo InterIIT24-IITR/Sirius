@@ -2,7 +2,7 @@ from rag.client import retrieve_documents
 from langchain_openai import ChatOpenAI
 
 
-def plan_rag_query(query):
+def plan_rag_query(query, agent = "finance"):
     llm = ChatOpenAI(model="gpt-4o-mini")
     plan_query = llm.invoke(
         f"""
@@ -14,7 +14,8 @@ def plan_rag_query(query):
         The steps you generate need to be clear, and should be written in a way that they can be input to another RAG model as queries for retrieval and step-by-step processing.
         Ensure each step of the plan is a separate line in the message and that can also be used a query for retrieval by another RAG agent.
         Put primary focus on the quality of the query for the RAG agent.
-        Do NOT output a plan with more than 5 steps.
+        Do NOT output a plan with more than 3 steps and try to minimise the number of steps to as low as possible, preferrably 2 or 3.
+        Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         """
     ).content
 

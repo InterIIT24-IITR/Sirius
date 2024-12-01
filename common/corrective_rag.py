@@ -14,7 +14,7 @@ def corrective_rag(query, documents):
     total_score /= doc_length
     if total_score > CORRECT_THRESHOLD:
         return documents
-    else if total_score > AMBIGUOUS_THRESHOLD:
+    elif total_score > AMBIGUOUS_THRESHOLD:
         external_knowledge = tavily_search(query)
         return documents + external_knowledge
     else:

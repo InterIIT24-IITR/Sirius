@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from swarm import Swarm
-from adarag import adarag_agent
+from common.adarag import adarag_agent
 from guardrail.guard import guardrail
 
 load_dotenv()
@@ -19,7 +19,7 @@ def run_pipeline(query):
         print(unsafe_category)
         return
 
-    response = client.run(agent=adarag_agent, messages=messages, debug=True)
+    response = client.run(agent=adarag_agent(), messages=messages, debug=True)
 
     safe, unsafe_category = guardrail(response.messages)
     if not safe:

@@ -24,4 +24,3 @@ def single_retrieval_finance_agent(query):
     response = llm.invoke(prompt).content
 
     return response
-

@@ -1,5 +1,7 @@
 from common.reranker import rerank_docs
 from langchain_openai import ChatOpenAI
+from common.hyde import hyde_query
+from rag.client import retrieve_documents
 from common.plan_rag import plan_rag_query
 from common.metrag import metrag_filter
 
@@ -19,7 +21,7 @@ def single_retriever_finance_agent(query):
     llm = ChatOpenAI(model="gpt-4o-mini")
     response = llm.invoke(prompt).content
 
-    documents = metrag_filter(documents, query, finance)
+    documents = metrag_filter(documents, query, "finance")
 
     return documents, response
 

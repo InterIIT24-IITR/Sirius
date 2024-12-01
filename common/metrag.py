@@ -1,7 +1,6 @@
 from langchain_openai import ChatOpenAI
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-
-METRAG_THRESHOLD = 0.75
+import numpy as np
 
 def metrag_score(document, query, agent):
     llm_utility = ChatOpenAI(model="gpt-4o-mini")
@@ -39,4 +38,6 @@ def metrag_score(document, query, agent):
 
 
 def metrag_filter(documents, query, agent):
-    return [doc in documents if metrag_score(doc, query, agent) > METRAG_THRESHOLD]
+    score_dict = [(doc,metrag_score(doc, query, agent)) for doc in documents]
+    metrag_threshold = np.percentile(list([b for (a, b) in score_dict]), 25)
+    return [doc for (doc, score) in score_dict if score > metrag_threshold]
