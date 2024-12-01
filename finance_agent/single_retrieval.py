@@ -25,21 +25,3 @@ def single_retrieval_finance_agent(query):
 
     return response
 
-def single_retriever_finance_agent(query):
-    """For simple finance related queries, run them through HyDe and then retrieve the documents and return the response and documents"""
-
-    modified_query = hyde_query(query)
-    documents = retrieve_documents(modified_query)
-
-    result = rerank_docs(modified_query, documents)
-
-    documentlist = [doc.document.text for doc in result.results]
-    context = "\n\n".join(documentlist)
-    prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'.
-                You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
-                You should ensure that the summary is clear and contains data relevant to the query.
-                """
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
-
-    return documents, response

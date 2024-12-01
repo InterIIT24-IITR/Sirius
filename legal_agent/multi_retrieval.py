@@ -1,11 +1,30 @@
 from common.reranker import rerank_docs
 from langchain_openai import ChatOpenAI
-from common.planrag import planrag_query
-from legal_agent.single_retrieval import single_retriever_legal_agent
+from common.plan_rag import plan_rag_query
 
+def single_retriever_legal_agent(query):
+    """For simple legal related queries, run them through HyDe and then retrieve the documents and return the response and documents"""
+
+    modified_query = hyde_query(query)
+    documents = retrieve_documents(modified_query)
+
+    result = rerank_docs(modified_query, documents)
+
+    documentlist = [doc.document.text for doc in result.results]
+    context = "\n\n".join(documentlist)
+    prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'.
+                You must keep in mind that you are a legal expert in the field of finance, and that the response you generate should be tailored accordingly.
+                You should ensure that the summary is clear and contains data relevant to the query.
+                """
+    llm = ChatOpenAI(model="gpt-4o-mini")
+    response = llm.invoke(prompt).content
+
+    return documents, response
+  
 def multi_retrieval_legal_agent(query):
     """Answer complex legal related queries by running them through a multi-retrieval process based on PlanRAG"""
-    plan = planrag_query(query, "legal")
+    plan = plan_rag_query(query, "legal")
+
     documents = []
     response = []
     print(f"Plan:\n{plan}")
@@ -19,8 +38,7 @@ def multi_retrieval_legal_agent(query):
                 You must keep in mind that you are a legal expert, and that the query you generate should be tailored accordingly.
                 """
             query = query_llm.invoke(query_prompt).content
-            print(f"Step:\n{step}")
-            print(f"Query:\n{query}")
+            
             docs, resp = single_retriever_legal_agent(query)
             for i, doc in enumerate(docs):
                 print(f"\nDocument {i}:")
@@ -28,8 +46,7 @@ def multi_retrieval_legal_agent(query):
                     print(f"{key}: {value}")
             documents.extend(docs)
             response.append(resp)
-            print("\n\n")
-    
+
     # modified_query = hyde_query(query) # For the complex query, do we need HyDE?
 
     result = rerank_docs(query, documents) 
