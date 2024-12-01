@@ -1,5 +1,3 @@
-from common.hyde import hyde_query
-from rag.client import retrieve_documents
 from common.reranker import rerank_docs
 from langchain_openai import ChatOpenAI
 from common.plan_rag import plan_rag_query
@@ -27,6 +25,7 @@ def multi_retrieval_finance_agent(query):
     plan = plan_rag_query(query, "finance")
     documents = []
     response = []
+    print(f"Plan:\n{plan}")
     for step in plan.split("\n"):
         if len(step) > 0:
             query_llm = ChatOpenAI(model="gpt-4o-mini")
@@ -37,26 +36,36 @@ def multi_retrieval_finance_agent(query):
                 You must keep in mind that you are an expert in the field of finance, and that the query you generate should be tailored accordingly.
                 """
             query = query_llm.invoke(query_prompt).content
-            print(f"Step: {step}")
-            print(f"Query: {query}")
+            print(f"Step:\n{step}")
+            print(f"Query:\n{query}")
             docs, resp = single_retriever_finance_agent(query)
+            for i, doc in enumerate(docs):
+                print(f"\nDocument {i}:")
+                for key, value in doc.items():
+                    print(f"{key}: {value}")
             documents.extend(docs)
             response.append(resp)
-            print(len(documents))
+  
+    # modified_query = hyde_query(query) # For the complex query, do we need HyDE?
+
 
     result = rerank_docs(query, documents) 
 
     documents = [doc.document.text for doc in result.results]
-    response.extend(documents)
-    context = "\n\n".join(response)
+    context_response = "\n\n".join(response)
+    context_documents = "\n\n".join(documents)
     prompt = f"""You are a helpful chat assistant that helps answer query based on the given context.
-            You will answer queries only on the basis of the following information: {context}
+            Currently, you had given a step-by-step plan to generate the answer and the plan is as follows:
+            {plan}
+            The responses to the queries generated from the plan are as follows:
+            {context_response}
+            Supplementary information to the responses is as follows:
+            {context_documents}
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
             You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
 
-    print("Multi Retrieval")
+    print("Prompt:\n", prompt)
     llm = ChatOpenAI(model="gpt-4o-mini")
     response = llm.invoke(prompt).content
-
     return response
