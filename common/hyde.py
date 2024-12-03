@@ -1,6 +1,4 @@
-from rag.client import retrieve_documents
 from langchain_openai import ChatOpenAI
-
 
 def hyde_query(query):
     llm = ChatOpenAI(model="gpt-4o-mini")

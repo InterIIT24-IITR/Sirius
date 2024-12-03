@@ -1,5 +1,4 @@
-import os
-import cohere
+import os, cohere
 
 co = cohere.ClientV2(api_key=os.environ["COHERE_API_KEY"])
 

@@ -1,6 +1,4 @@
-from rag.client import retrieve_documents
 from langchain_openai import ChatOpenAI
-
 
 def plan_rag_query(query, agent = "finance"):
     llm = ChatOpenAI(model="gpt-4o-mini")

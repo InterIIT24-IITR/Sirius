@@ -1,6 +1,4 @@
-from rag.client import retrieve_documents
 from langchain_openai import ChatOpenAI
-
 from common.websearch import tavily_search
 
 CORRECT_THRESHOLD=0.8
