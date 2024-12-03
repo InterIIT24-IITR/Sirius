@@ -1,6 +1,6 @@
 from swarm import Agent
 from finance_agent.agent import transfer_to_finance_agent
-from legal_agent.agent import transfer_to_legal_agent
+from sasuke.legal_agent.agent import transfer_to_legal_agent
 from common.general_agent import transfer_to_general_agent
 
 def adarag_agent():
