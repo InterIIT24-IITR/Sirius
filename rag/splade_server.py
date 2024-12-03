@@ -21,7 +21,7 @@ data_sources.append(
 )
 data_sources.append(
     pw.io.fs.read(
-        "./selfdocs",
+        "../MA_agent/MA",
         format="binary",
         mode="streaming",
         with_metadata=True,
@@ -31,7 +31,7 @@ PATHWAY_PORT = 9000
 PATHWAY_HOST = "127.0.0.1"
 
 text_splitter = TokenCountSplitter(min_tokens=1000, max_tokens=1500)
-embedder = SpladeEmbedder()
+embedder = SpladeEmbedder(model="naver/splade-cocondenser-ensembledistil")
 parser = ParseUnstructured()
 
 vector_server = VectorStoreServer(

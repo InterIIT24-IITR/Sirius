@@ -21,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 def retrieve_documents(query: str):
+    # query = 
     with ThreadPoolExecutor() as executor:
         vector_future = executor.submit(vector_client.retrieve, query, 10)
         bm25_future = executor.submit(bm25_client.retrieve, query, 10)

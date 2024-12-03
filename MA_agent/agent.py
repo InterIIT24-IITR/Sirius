@@ -6,13 +6,14 @@ import pathway as pw
 # Use fastapi for the API
 from flask import request
 from flask import Flask
+from sasuke.rag.client import retrieve_documents
 
 app = Flask(__name__)
 
-
+os.makedirs("MA", exist_ok=True)
 data_sources = [
     pw.io.fs.read(
-        MA_folder,
+        "./MA",
         format="binary",
         mode="streaming",
         with_metadata=True,
@@ -28,7 +29,6 @@ def agent():
 def ingest():
     print(request.files)
     company_a_legal = request.files["company_a_legal"]
-    print(company_a_legal)
     # company_b_legal = request.form.get("company_b_legal")
     # company_a_finance = request.form.get("company_a_financial")
     # company_b_finance = request.form.get("company_b_financial")
@@ -36,6 +36,9 @@ def ingest():
     unqiue_id = uuid.uuid4()
     MA_folder = f"MA/{unqiue_id}"
     os.makedirs(MA_folder, exist_ok=True)
+    # store the file in folder
+    company_a_legal.save(f"{MA_folder}/{company_a_legal.filename}")
+    return {"message": "Files uploaded successfully"}
     # # store the files in folder all are text blobs
     # for file in company_a_legal:
     #     with open(f"{MA_folder}/{file.filename}", "w") as f:
@@ -49,19 +52,11 @@ def ingest():
     # for file in company_b_finance:
     #     with open(f"{MA_folder}/{file.filename}", "w") as f:
     #         f.write(file.read())
-    data_sources.append(
-        pw.io.fs.read(
-            MA_folder,
-            format="binary",
-            mode="streaming",
-            with_metadata=True,
-        )
-    )
 
 
-def retrieve():
-    # Yaha kaise retrieve karna hai documents dekh lo I am not sure
-    pass
+def retrieve(query: str):
+    results = retrieve_documents(query)
+    return results
 
 
 def parse_outline():
