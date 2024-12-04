@@ -8,21 +8,19 @@ from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def single_retriever_legal_agent(query):
-    """For simple legal related queries, run them through HyDe and then retrieve the documents"""
+def single_retriever_agent(query):
+    """For simple queries, run them through HyDe and then retrieve the documents"""
     mod_query = hyde_query(query)
 
     documents = retrieve_documents(mod_query)
-    documents = metrag_filter(documents, query, "legal")
+    documents = metrag_filter(documents, query, "general")
     documents = corrective_rag(query, documents)
     result = rerank_docs(mod_query, documents)
 
     documentlist = [doc.document.text for doc in result.results]
     context = "\n\n".join(documentlist)
 
-    prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'.
-                You must keep in mind that you are a legal expert, and that the response you generate should be tailored accordingly.
-            """
+    prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'."""
     
     llm = ChatOpenAI(model="gpt-4o-mini")
     response = llm.invoke(prompt).content
@@ -31,14 +29,14 @@ def single_retriever_legal_agent(query):
 
 def step_executor(step):
     query_ = single_plan_rag_step_query(step)
-    documents, response = single_retriever_legal_agent(query_)
+    documents, response = single_retriever_agent(query_)
     return documents, response
 
 
-def multi_retrieval_legal_agent(query):
-    """Answer complex legal related queries by running them through a multi-retrieval process based on PlanRAG"""
+def multi_retrieval_agent(query):
+    """Answer complex queries by running them through a multi-retrieval process based on PlanRAG"""
     
-    plan = plan_rag_query(query, "legal")
+    plan = plan_rag_query(query, "general")
     dict_store = {}
     resp_dict = {}
     documents = []
@@ -58,7 +56,7 @@ def multi_retrieval_legal_agent(query):
         response.extend(resp_dict[i])
     
     modified_query = hyde_query(query)
-    documents = metrag_filter(documents, query, "legal")
+    documents = metrag_filter(documents, query, "general")
     documents = corrective_rag(query, documents)
     result = rerank_docs(modified_query, documents) 
 
@@ -77,7 +75,6 @@ def multi_retrieval_legal_agent(query):
             Supplementary information to the responses is as follows:
             {context_documents}
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
-            You must keep in mind that you are a legal expert, and that the response you generate should be tailored accordingly.
             """
     
     llm = ChatOpenAI(model="gpt-4o-mini")

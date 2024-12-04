@@ -39,5 +39,4 @@ def retrieve_documents(query: str):
 
     #  rerank results
     reranked_results = rerank_results(results)
-
     return reranked_results

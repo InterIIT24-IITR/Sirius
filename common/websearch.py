@@ -1,26 +1,35 @@
 from tavily import TavilyClient
 from langchain_community.document_loaders import BraveSearchLoader
-from linkup import LinkupClient
+#from linkup import LinkupClient
 import os
 
 def tavily_search(query):
-    tavily_client = TavilyClient(api_key=os.environ["TAVILY_KEY"])
-    response = tavily_client.search(query=query)
-    docs = [result['content'] for result in response['results']]
-    return docs
+    tavily_client = TavilyClient(api_key="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")
+    response = tavily_client.search(query=query)['results']
+
+    for result in response:
+        result['text'] = result.pop('content')
+
+    return response
 
 def brave_search(query):
     loader = BraveSearchLoader(
-        query=query, api_key=os.environ["BRAVE_KEY"], search_kwargs={"count": 5}
+        query=query, api_key="BSACXk-7IV2P_qFzZzHS9CLsRDWKZoU", search_kwargs={"count": 5}
     )
     docs = loader.load()
-    return docs
+    finaldocs = []
+    for doc in docs:
+        docdict = {}
+        docdict.update(doc.metadata)
+        docdict['text']=doc.page_content
+        finaldocs.append(docdict)
+    return finaldocs
 
-def linkup_search(query):
-    client = LinkupClient(api_key=os.environ["LINKUP_KEY"])
-    response = client.search(
-        query=query,
-        depth="deep",
-        output_type="sourcedAnswer"
-    )
-    return response.answer
+#def linkup_search(query):
+   #client = LinkupClient(api_key=os.environ["d29029da-250d-48d4-87ec-73be9a526871"])
+    #response = client.search(
+        #query=query,
+        #depth="deep",
+        #output_type="sourcedAnswer"
+    #)
+    #return response.answer

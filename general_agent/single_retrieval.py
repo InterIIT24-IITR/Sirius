@@ -5,12 +5,12 @@ from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from langchain_openai import ChatOpenAI
 
-def single_retrieval_legal_agent(query):
-    """Answer simple legal related queries by running them through HyDe and then retrieve the documents"""
+def single_retrieval_agent(query):
+    """Answer simple queries by running them through HyDe and then retrieve the documents"""
 
     modified_query = hyde_query(query)
     documents = retrieve_documents(modified_query)
-    documents = metrag_filter(documents, query, "legal")
+    documents = metrag_filter(documents, query, "general")
     documents = corrective_rag(query, documents)
     result = rerank_docs(modified_query, documents)
     documents = [doc.document.text for doc in result.results]
@@ -22,7 +22,6 @@ def single_retrieval_legal_agent(query):
             The context provided to you is as follows:
             {context}
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
-            You must keep in mind that you are a legal expert, and that the response you generate should be tailored accordingly.
             """
 
     llm = ChatOpenAI(model="gpt-4o-mini")

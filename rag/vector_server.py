@@ -16,14 +16,6 @@ data_sources.append(
         with_metadata=True,
     )
 )
-data_sources.append(
-    pw.io.fs.read(
-        "./selfdocs",
-        format="binary",
-        mode="streaming",
-        with_metadata=True,
-    )
-)
 
 PATHWAY_PORT = 8000
 PATHWAY_HOST = "127.0.0.1"

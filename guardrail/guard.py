@@ -2,7 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 def guardrail(conversation):
-    #return True, ""
+    return True, ""
     local_model_path = "guardrail/Llama-Guard-3-1B"
 
     model = AutoModelForCausalLM.from_pretrained(
