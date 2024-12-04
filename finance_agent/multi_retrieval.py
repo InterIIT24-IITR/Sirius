@@ -3,6 +3,7 @@ from langchain_openai import ChatOpenAI
 from common.hyde import hyde_query
 from rag.client import retrieve_documents
 from common.plan_rag import plan_rag_query
+from common.plan_rag import single_plan_rag_step_query
 from common.metrag import metrag_filter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -26,16 +27,7 @@ def single_retriever_finance_agent(query):
     response = llm.invoke(prompt).content
     return documents, response
 
-def single_plan_rag_step_query(step):
-    query_llm = ChatOpenAI(model="gpt-4o-mini")
-    query_prompt = f"""You are a helpful prompt engineering assistant that must generate a query to feed to an LLM based on the given step in a multi-step plan.
-        The step you must generate a query for is: {step}
-        The query you generate should be clear and concise, and should be designed to retrieve the most relevant documents and information for the given step.
-        It should be a query and not a statement, and must be no longer than 2 sentences.
-        You must keep in mind that you are an expert in the field of finance, and that the query you generate should be tailored accordingly.
-        """
-    query_ = query_llm.invoke(query_prompt).content
-    return query_
+
 
 def step_executor(step):
     query_ = single_plan_rag_step_query(step)

@@ -6,9 +6,10 @@ from pathlib import Path
 import time
 import asyncio
 from typing import List
-from common.plan_rag import plan_rag_query
+from common.plan_rag import plan_rag_query, single_plan_rag_step_query
 from constants import LIST_OF_DOCUMENTS_INPUT, LIST_OF_DOCUMENTS_OUTPUT
 from concurrent.futures import ThreadPoolExecutor
+
 
 app = FastAPI()
 
@@ -34,6 +35,14 @@ data_sources = [
     )
 ]
 
+
+def plan_to_queries(plan):
+    queries = []
+    for step in plan.split("\n"):
+        if len(step) > 0:
+            query = single_plan_rag_step_query(step)
+            queries.append(query)
+    return queries
 
 async def generate_agreement(company1, company2):
     async def create_queries(output_doc):
