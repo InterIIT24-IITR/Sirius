@@ -1,6 +1,6 @@
 import os, cohere
 
-co = cohere.ClientV2(api_key=os.environ["COHERE_API_KEY"])
+co = cohere.Client(api_key=os.environ["COHERE_API_KEY"])
 
 
 def rerank_docs(query, dat_arr):

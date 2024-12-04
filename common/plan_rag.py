@@ -1,6 +1,7 @@
 from langchain_openai import ChatOpenAI
 
-def plan_rag_query(query, agent = "finance", **kwargs):
+
+def plan_rag_query(query, agent="finance", **kwargs):
     llm = ChatOpenAI(model="gpt-4o-mini")
 
     if agent == "M&A":
@@ -18,14 +19,17 @@ def plan_rag_query(query, agent = "finance", **kwargs):
         You are a helpful AI agent.
         You are tasked with writing a detailed step-by-step plan to formulate a merger and acquisition agreement between two companies, {companies[0]} and {companies[1]}.
         Currently, you are in the process of drafting the {output_doc} document.
-        For this, you will break down the process into multiple steps, each of which will involve retrieving relevant information from the following documents: {', '.join(input_docs)}.
+        For this, you will break down the process into multiple steps, each of which will involve retrieving relevant information from the following documents: {', '.join(input_docs)} of both the companies.
         Your plan should include steps to retrieve information from each document and how to combine them to form the final agreement.
         Answer this question as a RAG planning agent and assume you have access to the appropriate documents and data as is needed.
         The steps you generate need to be clear, and should be written in a way that they can be input to another RAG model as queries for retrieval and step-by-step processing.
         Ensure each step of the plan is a separate line in the message and that can also be used a query for retrieval by another RAG agent.
         Put primary focus on the quality of the query for the RAG agent.
         Output a plan with a minimal number of steps, preferrably 3-4.
+        Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         """
+        plan_query = llm.invoke(prompt).content
+        return plan_query
 
     plan_query = llm.invoke(
         f"""
@@ -44,13 +48,14 @@ def plan_rag_query(query, agent = "finance", **kwargs):
 
     return plan_query
 
+
 def single_plan_rag_step_query(step):
     query_llm = ChatOpenAI(model="gpt-4o-mini")
     query_prompt = f"""You are a helpful prompt engineering assistant that must generate a query to feed to an LLM based on the given step in a multi-step plan.
         The step you must generate a query for is: {step}
         The query you generate should be clear and concise, and should be designed to retrieve the most relevant documents and information for the given step.
         It should be a query and not a statement, and must be no longer than 2 sentences.
-        You must keep in mind that you are an expert in the field of finance, and that the query you generate should be tailored accordingly.
+        You must keep in mind that you are an expert in the field of finance and legalities, and that the query you generate should be tailored accordingly.
         """
     query_ = query_llm.invoke(query_prompt).content
     return query_

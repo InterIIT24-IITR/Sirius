@@ -1,3 +1,5 @@
+import prompts
+
 LIST_OF_DOCUMENTS_INPUT = """
 1. Accounts Receivable & Payable
 2. Audited Financial Statement
@@ -18,3 +20,11 @@ LIST_OF_DOCUMENTS_OUTPUT = [
     "Letter of Intent",
     "Definitive Agreement",
 ]
+
+DOCUMENT_PROMPT_MAPPING = {
+    "NDA": prompts.PROMPT_NDA,
+    "Due Diligence": prompts.PROMPT_DUE_DILIGENCE,
+    "Term Sheet": prompts.PROMPT_TERM_SHEET,
+    "Letter of Intent": prompts.PROMPT_LETTER_OF_INTENT,
+    "Definitive Agreement": prompts.PROMPT_DEFINITIVE_AGREEMENT,
+}
