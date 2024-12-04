@@ -7,7 +7,8 @@ import time
 import asyncio
 from typing import List
 from common.plan_rag import plan_rag_query, single_plan_rag_step_query
-from rag.client import retrieve_documents
+
+# from rag.client import retrieve_documents
 from MA_agent.constants import (
     LIST_OF_DOCUMENTS_INPUT,
     LIST_OF_DOCUMENTS_OUTPUT,
@@ -22,6 +23,22 @@ import pymongo
 
 uri = "mongodb://localhost:27017/"
 client = pymongo.MongoClient(uri)
+
+from pathway.xpacks.llm.vector_store import VectorStoreClient
+
+VECTOR_PORT = 8765
+PATHWAY_HOST = "127.0.0.1"
+
+vector_client = VectorStoreClient(
+    host=PATHWAY_HOST,
+    port=VECTOR_PORT,
+)
+
+
+async def retrieve_documents(query: str):
+    results = vector_client.query(query, 10)
+    return results
+
 
 llm = ChatOpenAI(model="gpt-4o-mini")
 import json
@@ -48,15 +65,6 @@ DOCUMENT_OUTLINE_MAPPING = {
 }
 
 os.makedirs("MA", exist_ok=True)
-
-data_sources = [
-    pw.io.fs.read(
-        "./MA",
-        format="binary",
-        mode="streaming",
-        with_metadata=True,
-    )
-]
 
 
 def plan_to_queries(plan):
