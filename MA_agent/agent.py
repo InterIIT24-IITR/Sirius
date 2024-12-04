@@ -36,7 +36,9 @@ vector_client = VectorStoreClient(
 
 
 async def retrieve_documents(query: str):
+    # print(query)
     results = vector_client.query(query, 10)
+    print("DONE")
     return results
 
 
@@ -61,7 +63,7 @@ DOCUMENT_OUTLINE_MAPPING = {
     "Term Sheet": term_sheet_outline,
     "Letter of Intent": letter_of_intent_outline,
     "NDA": nda_outline,
-    "Due Diligence Report": due_diligence_outline,
+    "Due Diligence": due_diligence_outline,
 }
 
 os.makedirs("MA", exist_ok=True)
@@ -87,25 +89,34 @@ async def generate_agreement(company1, company2, id):
         )
         queries: list[str] = plan_to_queries(plan)
         return queries
-
+    
     tasks = [create_queries(output_doc) for output_doc in LIST_OF_DOCUMENTS_OUTPUT]
+    cache_file = f"MA_agent/{id}_queries_cache.txt"
+    if os.path.exists(cache_file):
+        with open(cache_file, "r") as f:
+            all_docs_queries = json.load(f)
+    else:
+        all_docs_queries: list[list[str]] = await asyncio.gather(*tasks)
+        with open(cache_file, "w") as f:
+            json.dump(all_docs_queries, f)
+
+#    tasks = [create_queries(output_doc) for output_doc in LIST_OF_DOCUMENTS_OUTPUT]
 
     # Wait for all tasks to complete in parallel and collect queries
-    all_docs_queries: list[list[str]] = await asyncio.gather(*tasks)
+    # all_docs_queries: list[list[str]] = await asyncio.gather(*tasks)
+# 
+    # Flatten the nested list of queries
+    all_queries = list(chain.from_iterable(all_docs_queries))
 
-    POOL_SIZE = 8
-    with ThreadPoolExecutor(max_workers=POOL_SIZE) as executor:
-        # Flatten the nested list of queries
-        all_queries = list(chain.from_iterable(all_docs_queries))
-        futures = [executor.submit(retrieve_documents, query) for query in all_queries]
-
-        all_results = [future.result() for future in futures]
+    # Use asyncio.gather to await all `retrieve_documents` calls
+    all_results = await asyncio.gather(*(retrieve_documents(query) for query in all_queries))
 
     start_idx = 0
     final_results: list[list[any]] = []
     for query_group in all_docs_queries:
         count = len(query_group)
-        final_results.append(all_results[start_idx : start_idx + count])
+        documents = all_results[start_idx : start_idx + count]
+        final_results.append(list(chain.from_iterable(documents)))
         start_idx += count
 
     async def create_summaries(documents, doc_type, company_name):
@@ -114,8 +125,8 @@ async def generate_agreement(company1, company2, id):
 
     tasks = []
     for idx, output_doc in enumerate(LIST_OF_DOCUMENTS_OUTPUT):
-        for company, company_name in zip(final_results, [company1, company2]):
-            tasks.append(create_summaries(company[idx], output_doc, company_name))
+        for company in enumerate([company1, company2]):
+            tasks.append(create_summaries(final_results[idx], output_doc, company))
 
     summaries: list[str] = await asyncio.gather(*tasks)
 
@@ -167,12 +178,12 @@ async def generate_document(
     document = llm.invoke(prompt).content
     return document
 
-
+# Final_results[idx]
 async def generate_summary(documents, doc_type, company_name):
     prompt = prompts.SUMMARY_PROMPT.format(
         company_name=company_name,
         document_type=doc_type,
-        context=" ".join(doc.text for doc in documents),
+        context=" ".join(doc['text'] for doc in documents),
     )
     summary = llm.invoke(prompt).content
     return summary

@@ -1,12 +1,12 @@
 PROMPT_TERM_SHEET = """
-**Objective:** Create a term sheet outlining the key terms and conditions for the proposed merger or acquisition between {company_a} and {company_B}. Use the provided company information and specified outline.
+**Objective:** Create a term sheet outlining the key terms and conditions for the proposed merger or acquisition between {company_a} and {company_b}. Use the provided company information and specified outline.
 
 **Inputs:**
 
 1. **{company_a} Details:**  
     {company_a_details}
 
-2. **{company_B} Details:**  
+2. **{company_b} Details:**  
     {company_b_details}
 
 3. **Document Outline (Markdown format):**  
@@ -18,14 +18,14 @@ Using the above inputs, draft a term sheet following the provided outline. The d
 """
 
 PROMPT_DEFINITIVE_AGREEMENT = """
-**Objective:** Write a definitive agreement for the merger/acquisition between {company_a} and {company_B} using the provided company details and outline.
+**Objective:** Write a definitive agreement for the merger/acquisition between {company_a} and {company_b} using the provided company details and outline.
 
 **Inputs:**
 
 1. **{company_a} Details:**  
     {company_a_details}
 
-2. **{company_B} Details:**  
+2. **{company_b} Details:**  
     {company_b_details}  
 
 3. **Document Outline (Markdown format):**  
@@ -37,14 +37,14 @@ Using the above inputs, draft a definitive agreement following the given outline
 """
 
 PROMPT_LETTER_OF_INTENT = """
-**Objective:** Write a Letter of Intent to outline the preliminary terms and intentions for the merger or acquisition between {company_a} and {company_B}. Use the provided company details and the specified outline format.
+**Objective:** Write a Letter of Intent to outline the preliminary terms and intentions for the merger or acquisition between {company_a} and {company_b}. Use the provided company details and the specified outline format.
 
 **Inputs:**
 
 1. **{company_a} Details:**  
     {company_a_details}
 
-2. **{company_B} Details:**  
+2. **{company_b} Details:**  
     {company_b_details}
 
 3. **Document Outline (Markdown format):**  
@@ -56,14 +56,14 @@ Utilizing the inputs above, draft a Letter of Intent that aligns with the provid
 """
 
 PROMPT_NDA = """
-**Objective:** Write a Non-Disclosure Agreement to protect confidential information exchanged between {company_a} and {company_B} during the merger or acquisition discussions. Use the provided company details and the specified outline format.
+**Objective:** Write a Non-Disclosure Agreement to protect confidential information exchanged between {company_a} and {company_b} during the merger or acquisition discussions. Use the provided company details and the specified outline format.
 
 **Inputs:**
 
 1. **{company_a} Details:**  
     {company_a_details}
 
-2. **{company_B} Details:**  
+2. **{company_b} Details:**  
     {company_b_details}
 
 3. **Document Outline (Markdown format):**  
@@ -75,14 +75,14 @@ Using the inputs above, draft a Non-Disclosure Agreement following the provided 
 """
 
 PROMPT_DUE_DILIGENCE = """
-**Objective:** Prepare a Due Diligence Request List to gather necessary information and documents from {company_a} and {company_B} for the merger or acquisition process. Use the provided company details and specified outline format.
+**Objective:** Prepare a Due Diligence Request List to gather necessary information and documents from {company_a} and {company_b} for the merger or acquisition process. Use the provided company details and specified outline format.
 
 **Inputs:**
 
 1. **{company_a} Details:**  
     {company_a_details}
 
-2. **{company_B} Details:**  
+2. **{company_b} Details:**  
     {company_b_details}
 
 3. **Document Outline (Markdown format):**  
@@ -125,7 +125,7 @@ Produce a single, cohesive narrative that combines both the summary and key insi
 
 **Output:**
 
-XYZ Corp's Due Diligence review highlights the {company_a}s being in strong financial health, underscored by steady revenue growth and robust equity standing. The company's consistent cash flow and prudent debt levels suggest a reliable financial foundation. Projected growth of 10% annually aligns well with industry trends, reinforcing market competitiveness. XYZ Corp's clean litigation history and regulatory compliance minimize potential legal risks, while its strong portfolio of five registered patents offers significant strategic leverage for future innovation and competitive advantage. Favorable terms in the current material contracts further support potential synergies in post-acquisition scenarios.
+XYZ Corp's Due Diligence review highlights the XYZ Corp's being in strong financial health, underscored by steady revenue growth and robust equity standing. The company's consistent cash flow and prudent debt levels suggest a reliable financial foundation. Projected growth of 10% annually aligns well with industry trends, reinforcing market competitiveness. XYZ Corp's clean litigation history and regulatory compliance minimize potential legal risks, while its strong portfolio of five registered patents offers significant strategic leverage for future innovation and competitive advantage. Favorable terms in the current material contracts further support potential synergies in post-acquisition scenarios.
 """
 
 
@@ -139,12 +139,12 @@ You are an expert analyst tasked with evaluating the potential merger/acquisitio
 
 Please provide your insights in the form of a JSON object with the following structure:
 
-{
+{{
   "financial_risk_assessment": "Your analysis here",
   "operational_compatibility": "Your analysis here",
   "cultural_considerations": "Your analysis here",
   "regulatory_compliance": "Your analysis here"
-}
+}}
 
 **Context:**
 
@@ -156,11 +156,12 @@ Please provide your insights in the form of a JSON object with the following str
 **Example Output:**
 
 
-{
+{{
   "financial_risk_assessment": "Company A has a strong balance sheet, but Company B's recent losses pose a risk. The combined entity may face cash flow challenges.",
   "operational_compatibility": "Both companies use similar ERP systems, which should ease integration. However, differences in supply chain management could pose challenges.",
   "cultural_considerations": "Company A has a hierarchical culture, while Company B is more collaborative. This may lead to initial friction among employees.",
   "regulatory_compliance": "The merger will require approval from the European Commission due to market share concerns in the EU."
-}
+}}
 
+DO NOT wrap the output in ```json``` markdown
 """
