@@ -8,14 +8,14 @@ import asyncio
 from typing import List
 from common.plan_rag import plan_rag_query, single_plan_rag_step_query
 from rag.client import retrieve_documents
-from constants import (
+from MA_agent.constants import (
     LIST_OF_DOCUMENTS_INPUT,
     LIST_OF_DOCUMENTS_OUTPUT,
     DOCUMENT_PROMPT_MAPPING,
 )
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
-import prompts
+import MA_agent.prompts as prompts
 from langchain_openai import ChatOpenAI
 import uvicorn
 import pymongo
@@ -85,7 +85,7 @@ async def generate_agreement(company1, company2, id):
     # Wait for all tasks to complete in parallel and collect queries
     all_docs_queries: list[list[str]] = await asyncio.gather(*tasks)
 
-    POOL_SIZE = 16
+    POOL_SIZE = 8
     with ThreadPoolExecutor(max_workers=POOL_SIZE) as executor:
         # Flatten the nested list of queries
         all_queries = list(chain.from_iterable(all_docs_queries))
@@ -182,6 +182,7 @@ async def generate_insights(summaries, company1, company2):
     )
     insights = llm.invoke(prompt).content
     insights = json.loads(insights)
+    return insights
 
 
 async def send_documents(output_to_document, insights, conversation_id):

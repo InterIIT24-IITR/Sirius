@@ -1,4 +1,4 @@
-import prompts
+import MA_agent.prompts as prompts
 
 LIST_OF_DOCUMENTS_INPUT = """
 1. Accounts Receivable & Payable
