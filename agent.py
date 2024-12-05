@@ -2,9 +2,15 @@ from dotenv import load_dotenv
 from swarm import Swarm
 from common.adarag import adarag_agent
 from guardrail.guard import guardrail
+import logging
 
+logging.basicConfig(
+    filename="debug.log",
+    level=logging.DEBUG,
+)
 load_dotenv()
 client = Swarm()
+
 
 def run_pipeline(query):
     messages = [
@@ -26,6 +32,9 @@ def run_pipeline(query):
         print(unsafe_category)
         return
     print(response.messages[-1]["content"])
+    return response.messages[-1]["content"]
 
-input_prompt = input("Ask a question: ")
-run_pipeline(input_prompt)
+
+if __name__ == "__main__":
+    input_prompt = input("Enter your prompt: ")
+    run_pipeline(input_prompt)

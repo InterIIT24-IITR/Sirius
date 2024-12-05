@@ -1,8 +1,11 @@
 from langchain_openai import ChatOpenAI
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import numpy as np
+from swarm.util import debug_print
+
 
 def metrag_score(document, query, agent):
+    debug_print(True, f"Processing tool call: {metrag_score.__name__}")
     llm_utility = ChatOpenAI(model="gpt-4o-mini")
     good_utility = "The document is absolutely outstanding and exceeds expectations in addressing the query. It is exceptionally relevant, brilliantly complete, impeccably accurate, and presented with crystal-clear clarity. Its consistency is flawless, making it an invaluable and extraordinary resource of immense utility!"
     bad_utility = "The document is utterly disappointing and fails to meet even basic expectations in addressing the query. It lacks relevance, is incomplete, riddled with inaccuracies, and confusingly presented. Its inconsistency undermines any potential value, making it a frustrating and entirely unhelpful resource."
@@ -48,6 +51,7 @@ def metrag_score(document, query, agent):
 
 
 def metrag_filter(documents, query, agent):
-    score_dict = [(doc,metrag_score(doc, query, agent)) for doc in documents]
+    debug_print(True, f"Processing tool call: {metrag_filter.__name__}")
+    score_dict = [(doc, metrag_score(doc, query, agent)) for doc in documents]
     metrag_threshold = np.percentile(list([b for (a, b) in score_dict]), 25)
     return [doc for (doc, score) in score_dict if score > metrag_threshold]

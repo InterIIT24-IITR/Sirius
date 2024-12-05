@@ -1,8 +1,8 @@
 from langchain_openai import ChatOpenAI
-from pathway.xpacks.llm.parsers import ParseUnstructured
-
+from swarm.util import debug_print
 
 def plan_rag_query(query, agent="finance", **kwargs):
+    debug_print(True, f"Processing tool call: {plan_rag_query.__name__}")
     llm = ChatOpenAI(model="gpt-4o-mini")
     
     if agent=="macro":
@@ -93,6 +93,7 @@ def plan_rag_query(query, agent="finance", **kwargs):
 
 
 def single_plan_rag_step_query(step):
+    debug_print(True, f"Processing tool call: {single_plan_rag_step_query.__name__}")
     query_llm = ChatOpenAI(model="gpt-4o-mini")
     query_prompt = f"""You are a helpful prompt engineering assistant that must generate a query to feed to an LLM based on the given step in a multi-step plan.
         The step you must generate a query for is: {step}
