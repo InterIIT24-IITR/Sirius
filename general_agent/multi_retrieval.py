@@ -1,5 +1,5 @@
 from common.reranker import rerank_docs
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from common.hyde import hyde_query
 from rag.client import retrieve_documents
 from common.plan_rag import plan_rag_query
@@ -22,8 +22,7 @@ def single_retriever_agent(query):
 
     prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'."""
     
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
 
     return documents, response
 
@@ -77,7 +76,6 @@ def multi_retrieval_agent(query):
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
             """
     
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
     
     return response

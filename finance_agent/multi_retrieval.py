@@ -1,5 +1,5 @@
 from common.reranker import rerank_docs
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from common.hyde import hyde_query
 from rag.client import retrieve_documents
 from common.plan_rag import plan_rag_query
@@ -24,8 +24,7 @@ def single_retriever_finance_agent(query):
                 You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
     
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
 
     return documents, response
 
@@ -80,7 +79,6 @@ def multi_retrieval_finance_agent(query):
             You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
     
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
     
     return response

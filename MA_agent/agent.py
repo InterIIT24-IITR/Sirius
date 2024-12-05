@@ -17,7 +17,7 @@ from MA_agent.constants import (
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 import MA_agent.prompts as prompts
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 import uvicorn
 import pymongo
 
@@ -42,7 +42,6 @@ async def retrieve_documents(query: str):
     return results
 
 
-llm = ChatOpenAI(model="gpt-4o-mini")
 import json
 
 app = FastAPI()
@@ -175,7 +174,7 @@ async def generate_document(
         company_b_details=company2_details,
         document_outline=DOCUMENT_OUTLINE_MAPPING[type],
     )
-    document = llm.invoke(prompt).content
+    document = call_llm(prompt)
     return document
 
 # Final_results[idx]
@@ -185,7 +184,7 @@ async def generate_summary(documents, doc_type, company_name):
         document_type=doc_type,
         context=" ".join(doc['text'] for doc in documents),
     )
-    summary = llm.invoke(prompt).content
+    summary = call_llm(prompt)
     return summary
 
 
@@ -199,7 +198,7 @@ async def generate_insights(summaries, company1, company2):
         a_summary=company1_summary,
         b_summary=company2_summary,
     )
-    insights = llm.invoke(prompt).content
+    insights = call_llm(prompt)
     insights = json.loads(insights)
     return insights
 

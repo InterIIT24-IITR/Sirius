@@ -1,4 +1,4 @@
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import numpy as np
 from swarm.util import debug_print
@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 def metrag_score(document, query, agent):
     debug_print(True, f"Processing tool call: {metrag_score.__name__}")
-    llm_utility = ChatOpenAI(model="gpt-4o-mini")
     good_utility = "The document is absolutely outstanding and exceeds expectations in addressing the query. It is exceptionally relevant, brilliantly complete, impeccably accurate, and presented with crystal-clear clarity. Its consistency is flawless, making it an invaluable and extraordinary resource of immense utility!"
     bad_utility = "The document is utterly disappointing and fails to meet even basic expectations in addressing the query. It lacks relevance, is incomplete, riddled with inaccuracies, and confusingly presented. Its inconsistency undermines any potential value, making it a frustrating and entirely unhelpful resource."
     prompt = f"""
@@ -47,7 +46,7 @@ def metrag_score(document, query, agent):
         """
         prompt = prompt + added_info   
         
-    response = llm_utility.invoke(prompt).content
+    response = call_llm(prompt)
     return document, SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
 
 

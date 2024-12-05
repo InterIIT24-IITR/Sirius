@@ -1,5 +1,5 @@
 import os
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 import PyPDF2
 import tiktoken
 from pydantic import BaseModel
@@ -60,7 +60,6 @@ async def extract_pdf_text(content: bytes) -> str:
 
 async def evaluate(text:str,id:str) -> Evals:
     global check_event
-    llm = ChatOpenAI(model="gpt-4o-mini")
     lines = text.splitlines()
     numbered_contract = "\n".join([f"{i+1}. {line}" for i, line in enumerate(lines)])
     evaluations = {}
@@ -88,7 +87,7 @@ async def evaluate(text:str,id:str) -> Evals:
 
         Do not output any additional text.
         """
-        output = llm.invoke(prompt).content
+        output = call_llm(prompt)
 
         try:
             evals = Evals(**json.loads(output[7:-3]))

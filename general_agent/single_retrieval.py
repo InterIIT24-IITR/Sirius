@@ -3,7 +3,7 @@ from rag.client import retrieve_documents
 from common.reranker import rerank_docs
 from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 
 def single_retrieval_agent(query):
     """Answer simple queries by running them through HyDe and then retrieve the documents"""
@@ -24,7 +24,6 @@ def single_retrieval_agent(query):
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
             """
 
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
 
     return response

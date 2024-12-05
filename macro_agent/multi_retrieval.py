@@ -1,5 +1,5 @@
 from common.reranker import rerank_docs
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from common.hyde import hyde_query
 from rag.client import retrieve_documents
 from common.plan_rag import plan_rag_query
@@ -18,8 +18,7 @@ def single_retriever_macro_agent(query):
     prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'.
                 You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
             """
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
     #TODO
     documents = metrag_filter(documents, query, "macro")
 
@@ -33,14 +32,13 @@ def multi_retrieval_macro_agent(query):
     print(f"Plan:\n{plan}")
     for step in plan.split("\n"):
         if len(step) > 0:
-            query_llm = ChatOpenAI(model="gpt-4o-mini")
             query_prompt = f"""You are a helpful prompt engineering assistant that must generate a query to feed to an LLM based on the given step in a multi-step plan.
                 The step you must generate a query for is: {step}
                 The query you generate should be clear and concise, and should be designed to retrieve the most relevant documents and information for the given step.
                 It should be a query and not a statement, and must be no longer than 2 sentences.
                 You must keep in mind that you are an expert in market analysis, and that the query you generate should be tailored accordingly.
                 """
-            query = query_llm.invoke(query_prompt).content
+            query = call_llm(query_prompt)
             print(f"Step:\n{step}")
             print(f"Query:\n{query}")
             docs, resp = single_retriever_macro_agent(query)
@@ -71,6 +69,5 @@ def multi_retrieval_macro_agent(query):
             """
 
     print("Prompt:\n", prompt)
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
     return response
