@@ -8,12 +8,12 @@ import json
 from contracts import contract_checklist
 import uvicorn
 import pymongo
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, WebSocket
 import asyncio
 import uuid
 import io
 
-
+check_event = asyncio.Event()
 uri = "mongodb://localhost:27017/"
 client = pymongo.MongoClient(uri)
 db = client["flags"]
@@ -59,6 +59,7 @@ async def extract_pdf_text(content: bytes) -> str:
 #     return len(encoding.encode(text))
 
 async def evaluate(text:str,id:str) -> Evals:
+    global check_event
     llm = ChatOpenAI(model="gpt-4o-mini")
     lines = text.splitlines()
     numbered_contract = "\n".join([f"{i+1}. {line}" for i, line in enumerate(lines)])
@@ -98,6 +99,7 @@ async def evaluate(text:str,id:str) -> Evals:
     data = await convert_to_mongo_format(evaluations)
     db.update_one({"id": id}, {"$set": data}, upsert=True)
     print("DONE")
+    check_event.set()
     
 
 @app.post("/submit")
@@ -111,6 +113,16 @@ async def upload_file(file: UploadFile = File(...)):
         "message": "Files uploaded successfully, agreement generation in progress.",
         "conversation_id": id,
     }
+
+@app.websocket("/ws/check")
+async def check(ws: WebSocket):
+    await ws.accept()
+    global check
+    while True:
+        await check_event.wait()  
+        await ws.send_json({"result": "OK"})  
+        check_event.clear()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8230)
