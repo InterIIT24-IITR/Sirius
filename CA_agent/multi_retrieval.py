@@ -1,5 +1,5 @@
 from common.reranker import rerank_docs
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from common.hyde import hyde_query
 from CA_agent.CA_client import retrieve_documents
 from common.plan_rag import plan_rag_query
@@ -21,8 +21,7 @@ def single_retriever_CA_agent(query):
                 You must keep in mind that you are an expert in the field of chartered accountancy, and that the response you generate should be tailored accordingly.
             """
     
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
 
     return documents, response
 
@@ -77,7 +76,6 @@ def multi_retrieval_CA_agent(query, sections, info_dict):
             Ensure that your output clearly mentions which sections of tax deduction are applicable to the user, and which section aren't.
             """
     
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
     
     return response

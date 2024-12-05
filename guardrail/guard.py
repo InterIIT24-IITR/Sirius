@@ -1,40 +1,19 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 from swarm.util import debug_print
+import requests
+
+def call_guard_model(conversation):
+    response = requests.post("https://8002-01jdya9bpnhj5dqyfzh17zdghv.cloudspaces.litng.ai/predict", 
+                             json=conversation
+            )
+    output = response.json()['output']
+    return output[0], output[1]
 
 
 def guardrail(conversation):
     debug_print(True, f"Processing tool call: {guardrail.__name__}")
-    return True, ""
-    local_model_path = "guardrail/Llama-Guard-3-1B"
-
-    model = AutoModelForCausalLM.from_pretrained(
-        local_model_path,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
-    tokenizer = AutoTokenizer.from_pretrained(local_model_path)
-
-    input_ids = tokenizer.apply_chat_template(conversation, return_tensors="pt").to(
-        model.device
-    )
-
-    prompt_len = input_ids.shape[1]
-    output = model.generate(
-        input_ids,
-        max_new_tokens=20,
-        pad_token_id=0,
-    )
-    generated_tokens = output[:, prompt_len:]
-    output = tokenizer.decode(generated_tokens[0])
-    out1 = output.split("\n")[2]
-    out2 = output.split("\n")[3]
-    out2 = out2[:-10]
-
-    if out1 == "Safe":
-        return True, ""
-    else:
-        return False, out2
+    return call_guard_model(conversation)
 
 
 if __name__ == "__main__":

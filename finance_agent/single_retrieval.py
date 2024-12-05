@@ -3,7 +3,7 @@ from rag.client import retrieve_documents
 from common.reranker import rerank_docs
 from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 
 def single_retrieval_finance_agent(query):
     """Answer simple finance related queries by running them through HyDe and then retrieve the documents"""
@@ -25,7 +25,6 @@ def single_retrieval_finance_agent(query):
             You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
 
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+    response = call_llm(prompt)
 
     return response

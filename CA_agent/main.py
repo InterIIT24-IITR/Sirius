@@ -1,5 +1,5 @@
 import os, uuid, time
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from pathway.xpacks.llm.parsers import ParseUnstructured
 from pathway.xpacks.llm.vector_store import VectorStoreClient
 from common.plan_rag import plan_rag_query, single_plan_rag_step_query
@@ -18,7 +18,6 @@ def parse_document(docpath):
 def add_user_document(documentpath):
     # Apart from this make sure the document is added to the vector store
     parsed_doc = parse_document(documentpath)
-    llm = ChatOpenAI(model="gpt-4o-mini")
     prompt = f"""
     You are a helpful AI agent.
     You are a knowledgeable agent aware of the field of chartered accountancy and finance. Particularly, you are
@@ -28,14 +27,14 @@ def add_user_document(documentpath):
     Your job is to parse the document and extract the relevant information from it, such as the income, expenses, and any other relevant information.
     You should return the extracted information in a structured format that is easy to understand and is descriptive of the document's content.
     """
-    summarised_doc = llm.invoke(prompt).content
+    summarised_doc = call_llm(prompt)
     prompt = f"""
     You are a helpful AI agent.
     Return a small one-line descriptor of the content of this document: '{parsed_doc}'.
     You have generated a summary of the document: '{summarised_doc}'
     Now you need to return a one-line descriptor for the same document.sum
     """
-    point_doc = llm.invoke(prompt).content
+    point_doc = call_llm(prompt)
     return summarised_doc, point_doc
 
 def add_to_info(documentpath, info_dict):
@@ -52,7 +51,6 @@ def single_section_handler(info_dict, section):
     The sections that are relevant are: {", ".join(section)}
     The documents that are input by the user are as follows:{temp}
     """
-    llm = ChatOpenAI(model="gpt-4o-mini")
     response = multi_retrieval_CA_agent(query, section, info_dict)
     prompt_new = f"""
     {query}
@@ -67,7 +65,7 @@ def single_section_handler(info_dict, section):
     }}
     Also include a summary for each section as to why it may or may not be applicale to the user in a single line or two as a second JSON along with minimal calculations if possible. This information should be relevant to the user and not generic.
     """
-    response = llm.invoke(prompt_new).content
+    response = call_llm(prompt_new)
     return response
 
 def overall_handler(info_dict):
@@ -93,8 +91,7 @@ def overall_handler(info_dict):
     }}
     Also include a summary for each section as to why it may or may not be applicale to the user in a single line or two as a second JSON along with minimal calculations if possible. This information should be relevant to the user and not generic.
     """
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt_new).content
+    response = call_llm(prompt_new)
     return response
 
 def user_input_descript(input, info_dict):

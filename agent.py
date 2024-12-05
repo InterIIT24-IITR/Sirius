@@ -3,14 +3,15 @@ from swarm import Swarm
 from common.adarag import adarag_agent
 from guardrail.guard import guardrail
 import logging
+import os
+
+load_dotenv()
 
 logging.basicConfig(
     filename="debug.log",
     level=logging.DEBUG,
 )
-load_dotenv()
 client = Swarm()
-
 
 def run_pipeline(query):
     messages = [
@@ -23,16 +24,25 @@ def run_pipeline(query):
     safe, unsafe_category = guardrail(messages)
     if not safe:
         print(unsafe_category)
-        return
+        return "Sorry we can't answer the request"
 
     response = client.run(agent=adarag_agent(), messages=messages, debug=True)
+    answer = response.messages[-1]["content"]
 
-    safe, unsafe_category = guardrail(response.messages)
+    messages += [
+        {
+            "role": "assistant",
+            "content": answer,
+        }
+    ]
+
+    safe, unsafe_category = guardrail(messages)
     if not safe:
         print(unsafe_category)
-        return
-    print(response.messages[-1]["content"])
-    return response.messages[-1]["content"]
+        return "Sorry we can't answer the request"
+    
+    print(answer)
+    return answer
 
 
 if __name__ == "__main__":
