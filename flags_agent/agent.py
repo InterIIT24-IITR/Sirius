@@ -5,7 +5,7 @@ import tiktoken
 from pydantic import BaseModel
 from typing import Optional
 import json
-from contracts import contract_checklist
+from flags_agent.contracts import contract_checklist
 import uvicorn
 import pymongo
 from fastapi import FastAPI, File, UploadFile, WebSocket
@@ -32,18 +32,41 @@ class Evals(BaseModel):
     evals: list[Eval]
     checklist_relevance: float
 
+def transform_to_prisma_schema(id,evals):
 
-async def convert_to_mongo_format(data):
-    """
-    Converts the input data into a MongoDB-friendly format.
-    """
-    # Iterate over each category in the data
-    converted_data = {}
-    for category, category_data in data.items():
-        category_entry = category_data.dict()
-        converted_data[category] = category_entry
+    for category,evals in evals.items():
+        result = {
+            "group _id": id,
+            "category": category,
+            "checklistRelevance": evals.checklist_relevance,
+            "evaluations": []
+        }
 
-    return converted_data
+        # Create the Evaluation entries
+        for eval_item in evals.evals:
+            evaluation = {
+                "id": str(uuid.uuid4()),  
+                "resultId": id,
+                "item": eval_item.item,
+                "isMet": eval_item.is_met,
+                "explanation": eval_item.explanation,
+                "reference": eval_item.reference
+            }
+            result["evaluations"].append(evaluation)
+        db.update_one({"id": id}, {"$set": result}, upsert=True)
+
+
+# async def convert_to_mongo_format(data):
+#     """
+#     Converts the input data into a MongoDB-friendly format.
+#     """
+#     # Iterate over each category in the data
+#     converted_data = {}
+#     for category, category_data in data.items():
+#         category_entry = category_data.dict()
+#         converted_data[category] = category_entry
+
+#     return converted_data
 async def extract_pdf_text(content: bytes) -> str:
     try:
         reader = PyPDF2.PdfReader(io.BytesIO(content))
@@ -53,10 +76,6 @@ async def extract_pdf_text(content: bytes) -> str:
         return text
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
-
-# def count_tokens(text):
-#     encoding = tiktoken.encoding_for_model("gpt-4o-mini")
-#     return len(encoding.encode(text))
 
 async def evaluate(text:str,id:str) -> Evals:
     global check_event
@@ -88,15 +107,13 @@ async def evaluate(text:str,id:str) -> Evals:
         Do not output any additional text.
         """
         output = call_llm(prompt)
-
         try:
             evals = Evals(**json.loads(output[7:-3]))
             evaluations[title] = evals
         except Exception as e:
             print(e)
     print(evaluations)
-    data = await convert_to_mongo_format(evaluations)
-    db.update_one({"id": id}, {"$set": data}, upsert=True)
+    transform_to_prisma_schema(id,evaluations)
     print("DONE")
     check_event.set()
     
@@ -122,11 +139,5 @@ async def check(ws: WebSocket):
         await ws.send_json({"result": "OK"})  
         check_event.clear()
 
-
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8230)
-
-
-
-
-
