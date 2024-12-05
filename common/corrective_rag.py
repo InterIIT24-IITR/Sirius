@@ -1,6 +1,7 @@
 from langchain_openai import ChatOpenAI
 from common.websearch import tavily_search
 from swarm.util import debug_print
+from concurrent.futures import ThreadPoolExecutor
 
 CORRECT_THRESHOLD = 0.8
 AMBIGUOUS_THRESHOLD = 0.5
@@ -10,9 +11,15 @@ def corrective_rag(query, documents):
     debug_print(True, f"Processing tool call: {corrective_rag.__name__}")
     total_score = 0
     doc_length = len(documents)
+
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(lambda doc: score_document_relevance(query, doc), documents)
+    total_score = sum(results)
+    
     for doc in documents:
         total_score += score_document_relevance(query, doc)
-    total_score /= doc_length
+    if doc_length > 0: 
+        total_score /= doc_length
     if total_score > CORRECT_THRESHOLD:
         return documents
     elif total_score > AMBIGUOUS_THRESHOLD:
