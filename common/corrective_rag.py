@@ -12,7 +12,8 @@ def corrective_rag(query, documents):
     doc_length = len(documents)
     for doc in documents:
         total_score += score_document_relevance(query, doc)
-    total_score /= doc_length
+    if doc_length > 0: 
+        total_score /= doc_length
     if total_score > CORRECT_THRESHOLD:
         return documents
     elif total_score > AMBIGUOUS_THRESHOLD:

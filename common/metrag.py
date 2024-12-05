@@ -53,5 +53,7 @@ def metrag_score(document, query, agent):
 def metrag_filter(documents, query, agent):
     debug_print(True, f"Processing tool call: {metrag_filter.__name__}")
     score_dict = [(doc, metrag_score(doc, query, agent)) for doc in documents]
+    if len(score_dict) == 0:
+        return []
     metrag_threshold = np.percentile(list([b for (a, b) in score_dict]), 25)
     return [doc for (doc, score) in score_dict if score > metrag_threshold]
