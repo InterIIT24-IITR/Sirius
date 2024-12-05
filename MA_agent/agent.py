@@ -150,7 +150,7 @@ async def generate_agreement(company1, company2, id):
 
 
 @app.post("/submit")
-async def ingest(company1: str, company2: str):
+async def ingest(company1: str, company2: str, files: List[UploadFile]):
     id = str(uuid.uuid4())
     # for file in files:
     #     file_location = f"MA/{id}_{file.filename}"
