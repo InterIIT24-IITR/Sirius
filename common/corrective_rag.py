@@ -1,10 +1,13 @@
 from langchain_openai import ChatOpenAI
 from common.websearch import tavily_search
+from swarm.util import debug_print
 
-CORRECT_THRESHOLD=0.8
-AMBIGUOUS_THRESHOLD=0.5
+CORRECT_THRESHOLD = 0.8
+AMBIGUOUS_THRESHOLD = 0.5
+
 
 def corrective_rag(query, documents):
+    debug_print(True, f"Processing tool call: {corrective_rag.__name__}")
     total_score = 0
     doc_length = len(documents)
     for doc in documents:
@@ -17,10 +20,11 @@ def corrective_rag(query, documents):
         return documents + external_knowledge
     else:
         return tavily_search(query)
-    
+
 
 def score_document_relevance(query, document):
-    """Evaluate and return relevance of documents on a scale of 0-1"""
+    debug_print(True, f"Processing tool call: {score_document_relevance.__name__}")
+    """Evaluate and return relevance of documents on a scale of 0-1 (Only output the score, up to 2 decimal places)"""
     llm = ChatOpenAI(model="gpt-4o-mini")
     score = llm.invoke(
         f"""
@@ -34,4 +38,4 @@ def score_document_relevance(query, document):
         """
     ).content
 
-    return score
+    return float(score)

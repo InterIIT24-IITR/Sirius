@@ -1,6 +1,9 @@
 from langchain_openai import ChatOpenAI
+from swarm.util import debug_print
+
 
 def hyde_query(query):
+    debug_print(True, f"Processing tool call: {hyde_query.__name__}")
     llm = ChatOpenAI(model="gpt-4o-mini")
     hypothetical_doc = llm.invoke(
         f"""Write a detailed explanation or passage on: '{query}'

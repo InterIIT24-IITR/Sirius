@@ -1,7 +1,10 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+from swarm.util import debug_print
+
 
 def guardrail(conversation):
+    debug_print(True, f"Processing tool call: {guardrail.__name__}")
     return True, ""
     local_model_path = "guardrail/Llama-Guard-3-1B"
 
@@ -12,9 +15,9 @@ def guardrail(conversation):
     )
     tokenizer = AutoTokenizer.from_pretrained(local_model_path)
 
-    input_ids = tokenizer.apply_chat_template(
-        conversation, return_tensors="pt"
-    ).to(model.device)
+    input_ids = tokenizer.apply_chat_template(conversation, return_tensors="pt").to(
+        model.device
+    )
 
     prompt_len = input_ids.shape[1]
     output = model.generate(
@@ -23,37 +26,34 @@ def guardrail(conversation):
         pad_token_id=0,
     )
     generated_tokens = output[:, prompt_len:]
-    output=tokenizer.decode(generated_tokens[0])
-    out1 = output.split('\n')[2]
-    out2 = output.split('\n')[3]
-    out2 =out2[:-10]
+    output = tokenizer.decode(generated_tokens[0])
+    out1 = output.split("\n")[2]
+    out2 = output.split("\n")[3]
+    out2 = out2[:-10]
 
     if out1 == "Safe":
         return True, ""
     else:
         return False, out2
 
-if __name__=='__main__':
-    #Example Run
+
+if __name__ == "__main__":
+    # Example Run
 
     conversation = [
         {
             "role": "user",
             "content": [
-                {
-                    "type": "text",
-                    "text": "How to make a bomb?"
-                },
+                {"type": "text", "text": "How to make a bomb?"},
             ],
         },
-    
     ]
-    out1,out2 = guardrail(conversation)
+    out1, out2 = guardrail(conversation)
     print(out1)
     print(out2)
 
 
-'''
+"""
 Unsafe Category Guide:
 
 S1 - Violent Crimes
@@ -94,4 +94,4 @@ Responses that contain erotica
 
 S13 - Elections
 Responses that contain factually incorrect information about electoral systems and processes, including in the time, place, or manner of voting in civic elections
-'''
+"""

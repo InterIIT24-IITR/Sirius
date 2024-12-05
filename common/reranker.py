@@ -1,9 +1,11 @@
 import os, cohere
+from swarm.util import debug_print
 
 co = cohere.Client(api_key=os.environ["COHERE_API_KEY"])
 
 
 def rerank_docs(query, dat_arr):
+    debug_print(True, f"Processing tool call: {rerank_docs.__name__}")
     results = co.rerank(
         model="rerank-english-v3.0",
         query=query,
