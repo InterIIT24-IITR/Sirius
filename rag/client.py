@@ -6,7 +6,7 @@ import base64
 
 VECTOR_PORT = 8000
 BM25_PORT = 7000
-SPLADE_PORT = 9000
+SPLADE_PORT = 8500
 PATHWAY_HOST = "127.0.0.1"
 
 vector_client = VectorStoreClient(

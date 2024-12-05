@@ -20,7 +20,7 @@ data_sources.append(
     )
 )
 
-PATHWAY_PORT = 9000
+PATHWAY_PORT = 8500
 PATHWAY_HOST = "127.0.0.1"
 
 text_splitter = TokenCountSplitter(min_tokens=1000, max_tokens=1500)

@@ -73,7 +73,7 @@ def multi_retrieval_agent(query):
             {context_response}
             Supplementary information to the responses is as follows:
             {context_documents}
-            Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
+            Do not use outside knowledge to answer the query. If there is missing context, don't try to make up facts and figures.
             """
     
     response = call_llm(prompt)

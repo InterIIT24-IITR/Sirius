@@ -5,7 +5,7 @@ from swarm.util import debug_print
 from concurrent.futures import ThreadPoolExecutor
 
 
-def metrag_score(document, query, agent):
+def metrag_score(document, query, agent, doc_):
     debug_print(True, f"Processing tool call: {metrag_score.__name__}")
     good_utility = "The document is absolutely outstanding and exceeds expectations in addressing the query. It is exceptionally relevant, brilliantly complete, impeccably accurate, and presented with crystal-clear clarity. Its consistency is flawless, making it an invaluable and extraordinary resource of immense utility!"
     bad_utility = "The document is utterly disappointing and fails to meet even basic expectations in addressing the query. It lacks relevance, is incomplete, riddled with inaccuracies, and confusingly presented. Its inconsistency undermines any potential value, making it a frustrating and entirely unhelpful resource."
@@ -47,13 +47,13 @@ def metrag_score(document, query, agent):
         prompt = prompt + added_info   
         
     response = call_llm(prompt)
-    return document, SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
+    return doc_, SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
 
 
 def metrag_filter(documents, query, agent):
     debug_print(True, f"Processing tool call: {metrag_filter.__name__}")
     with ThreadPoolExecutor() as executor:
-        results = executor.map(lambda doc: metrag_score(doc, query, agent), documents)
+        results = executor.map(lambda doc: metrag_score(doc["text"], query, agent, doc), documents)
     score_dict = [result for result in results]
     if len(score_dict) == 0:
         return []

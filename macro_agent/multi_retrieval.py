@@ -10,6 +10,8 @@ def single_retriever_macro_agent(query):
 
     modified_query = hyde_query(query)
     documents = retrieve_documents(modified_query)
+    documents = metrag_filter(documents, query, "macro")
+    documents = corrective_rag(query, documents)
 
     result = rerank_docs(modified_query, documents)
 
@@ -64,7 +66,7 @@ def multi_retrieval_macro_agent(query):
             {context_response}
             Supplementary information to the responses is as follows:
             {context_documents}
-            Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
+            Do not use outside knowledge to answer the query. If there is missing context, don't try to make up facts and figures.
             You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
             """
 
