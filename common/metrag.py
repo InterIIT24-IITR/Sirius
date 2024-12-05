@@ -28,14 +28,24 @@ def metrag_score(document, query, agent):
     The document is as follows:
     '{document}'
     """
+    
     if agent == "finance":
         added_info = """
         You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
         For instance, for relevancy you also need to consider whether the document contains the relevant terms and whether it is focused on the company which is the same as the query.
         If there is no reference to the company of the query in the document, it is not relevant, then output the same output as that for a low utility document.
         """
-        prompt = prompt + added_info
-
+        prompt = prompt + added_info 
+    
+    if agent == "macro":
+        added_info = """
+        You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
+        For instance, for relevancy, you need to consider whether the document contains relevant terms related to the product field and whether it focuses on the companies identified in the query (e.g., Apple, Samsung, Xiaomi).
+        If there is no reference to the companies or the product field specified in the query within the document, it is not relevant. In such cases, output the same response as that for a low utility document.
+        Additionally, ensure that the insights you provide are actionable and reflect current market trends, opportunities, and competitive dynamics.
+        """
+        prompt = prompt + added_info   
+        
     response = llm_utility.invoke(prompt).content
     return SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
 

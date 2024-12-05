@@ -150,14 +150,14 @@ async def generate_agreement(company1, company2, id):
 
 
 @app.post("/submit")
-async def ingest(company1: str, company2: str):
+async def ingest(company1: str, company2: str, files: List[UploadFile]):
     id = str(uuid.uuid4())
-    # for file in files:
-    #     file_location = f"MA/{id}_{file.filename}"
-    #     with open(file_location, "wb") as f:
-    #         f.write(await file.read())
+    for file in files:
+        file_location = f"./MA_agent/MA/{id}_{file.filename}"
+        with open(file_location, "wb") as f:
+            f.write(await file.read())
 
-    asyncio.create_task(generate_agreement(company1, company2, id))
+    # asyncio.create_task(generate_agreement(company1, company2, id))
 
     return {
         "message": "Files uploaded successfully, agreement generation in progress.",
