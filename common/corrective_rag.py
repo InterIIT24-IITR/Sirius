@@ -4,7 +4,7 @@ from swarm.util import debug_print
 from concurrent.futures import ThreadPoolExecutor
 
 CORRECT_THRESHOLD = 0.8
-AMBIGUOUS_THRESHOLD = 0.5
+AMBIGUOUS_THRESHOLD = 0.4
 
 
 def corrective_rag(query, documents):
