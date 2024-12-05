@@ -2,13 +2,13 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from func_tracker import FunctionTracker
+import time
 import pymongo
 from pymongo.mongo_client import MongoClient
 import datetime
-import time
 
 app = FastAPI()
-query = None
+
 uri = ""
 client = MongoClient(uri)
 db = client["chat_database"]
@@ -23,11 +23,10 @@ app.add_middleware(
 )
 
 ##example
-
-async def pipeline(prompt,ws):
-    await ws.send_json({"message" : pipeline.__name__, })
-    time.sleep(1)
-    return "hello world"
+# @FunctionTracker.track_function
+# def func1(*args, **kwargs):
+#     time.sleep(1)
+#     return "hello world"
 
 @app.websocket("/ws/query")
 async def websocket_endpoint(websocket: WebSocket):
@@ -52,16 +51,15 @@ async def websocket_endpoint(websocket: WebSocket):
             "timestamp": datetime.utcnow(),
             }
             session_db.insert_one(document)
-            response = await pipeline(prompt, websocket)
+
             await websocket.send_json({"status": "completed", "result": response})
         except Exception as e:
             await websocket.send_json({"Error": {str(e)}})
     
     finally:
         await websocket.close()
-
-
         
+
 @app.get("/converstaion")
 def get_converstaion():
     all_chats = session_db.find().sort("timestamp", pymongo.ASCENDING)
@@ -77,5 +75,4 @@ def get_converstaion():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8100)
-    
+    uvicorn.run(app, host="0.0.0.0", port=8000)
