@@ -25,7 +25,6 @@ def run_pipeline(query):
     if not safe:
         print(unsafe_category)
         return
-
     print(response.messages[-1]["content"])
 
 input_prompt = input("Ask a question: ")

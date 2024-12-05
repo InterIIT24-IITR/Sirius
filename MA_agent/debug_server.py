@@ -1,35 +1,32 @@
-import sys, logging
-import pathway as pw
-from pathway.xpacks.llm.embedders import OpenAIEmbedder, SentenceTransformerEmbedder
+import logging
+from pathway.xpacks.llm.embedders import SentenceTransformerEmbedder
 from pathway.xpacks.llm.splitters import TokenCountSplitter
 from pathway.xpacks.llm.vector_store import VectorStoreServer
 from pathway.xpacks.llm.parsers import ParseUnstructured
+import sys
 
 logging.basicConfig(stream=sys.stderr, level=logging.WARN, force=True)
+
+import pathway as pw
 
 data_sources = []
 data_sources.append(
     pw.io.fs.read(
-        "./documents",
-        format="binary",
-        mode="streaming",
-        with_metadata=True,
-    )
-)
-data_sources.append(
-    pw.io.fs.read(
-        "./selfdocs",
+        "./MA",
         format="binary",
         mode="streaming",
         with_metadata=True,
     )
 )
 
-PATHWAY_PORT = 8000
+PATHWAY_PORT = 8765
 PATHWAY_HOST = "127.0.0.1"
 
+
+# embedder = SpladeEmbedder(model="naver/splade-cocondenser-ensembledistil")
 text_splitter = TokenCountSplitter(min_tokens=1000, max_tokens=1500)
-embedder = SentenceTransformerEmbedder(model="paraphrase-MiniLM-L6-v2")
+embedder = SentenceTransformerEmbedder(model="infgrad/stella-base-en-v2")
+
 parser = ParseUnstructured()
 
 vector_server = VectorStoreServer(
@@ -38,6 +35,7 @@ vector_server = VectorStoreServer(
     embedder=embedder,
     splitter=text_splitter,
 )
+print("Starting server")
 vector_server.run_server(
-    host=PATHWAY_HOST, port=PATHWAY_PORT, threaded=False, with_cache=False
+    host=PATHWAY_HOST, port=PATHWAY_PORT, threaded=True, with_cache=False
 )
