@@ -25,6 +25,7 @@ def metrag_score(document, query, agent):
     The document is as follows:
     '{document}'
     """
+    
     if agent == "finance":
         added_info = """
         You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
@@ -32,7 +33,8 @@ def metrag_score(document, query, agent):
         If there is no reference to the company of the query in the document, it is not relevant, then output the same output as that for a low utility document.
         """
         prompt = prompt + added_info 
-    elif agent == "macro":
+    
+    if agent == "macro":
         added_info = """
         You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
         For instance, for relevancy, you need to consider whether the document contains relevant terms related to the product field and whether it focuses on the companies identified in the query (e.g., Apple, Samsung, Xiaomi).
