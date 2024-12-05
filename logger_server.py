@@ -15,10 +15,19 @@ async def monitor_logs(websocket: WebSocket, log_path: str):
                 line = file.readline()
                 if line:
                     match = re.search(r"Processing tool call: (\w+)", line)
+                    tree = re.search(r"Processing tree call: (\w+)", line)
                     if match:
                         tool_name = match.group(1)
                         print(f"Sending log: {tool_name}")
-                        await websocket.send_text(f"{tool_name}")
+                        await websocket.send_json(
+                            {"type": "function", "name": f"{tool_name}"}
+                        )
+                    elif tree:
+                        tree_name = tree.group(1)
+                        print(f"Sending log: {tree_name}")
+                        await websocket.send_text(
+                            {"type": "treeState", "name": f"{tree_name}"}
+                        )
                 else:
                     await asyncio.sleep(0.5)
     except Exception as e:
