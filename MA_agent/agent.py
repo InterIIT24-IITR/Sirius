@@ -1,7 +1,7 @@
 import os
 import uuid
 import pathway as pw
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, WebSocket
 from pathlib import Path
 import time
 import asyncio
@@ -34,7 +34,7 @@ vector_client = VectorStoreClient(
     port=VECTOR_PORT,
 )
 
-
+check_event = asyncio.Event()
 async def retrieve_documents(query: str):
     # print(query)
     results = vector_client.query(query, 10)
@@ -211,9 +211,19 @@ async def send_documents(output_to_document, insights, conversation_id):
     output_to_document["insights"] = insights
     output_to_document["conversation_id"] = conversation_id
 
-    collection.insert_one(output_to_document)
+    await collection.insert_one(output_to_document)
+    check_event.set()
     return
 
+
+@app.websocket("/ws/check")
+async def check(ws: WebSocket):
+    await ws.accept()
+    global check
+    while True:
+        await check_event.wait()  
+        await ws.send_json({"result": "OK"})  
+        check_event.clear()
 
 # Run the FastAPI application
 if __name__ == "__main__":
