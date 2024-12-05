@@ -72,8 +72,15 @@ def plan_rag_query(query, agent="finance", **kwargs):
         {userinfo_str}
         Ensure your step has 2-3 plans. Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         An example plan would be that the first step is to retrieve the user's relevant documents and the second step is to retrieve the relevant information from the income tax laws.
-        """ 
-
+        """
+        plan_query = call_llm(prompt)
+        return plan_query
+    expertise = " "
+    if agent == "finance":
+        expertise = "You are an expert in the field of finance. Your answer should be tailored accordingly."
+    elif agent == "legal":
+        expertise = "You are a legal expert. Your answer should be tailored accordingly."
+    
     plan_query = call_llm(
         f"""
         You are a helpful AI agent.
@@ -84,6 +91,7 @@ def plan_rag_query(query, agent="finance", **kwargs):
         The steps you generate need to be clear, and should be written in a way that they can be input to another RAG model as queries for retrieval and step-by-step processing.
         Ensure each step of the plan is a separate line in the message and that can also be used a query for retrieval by another RAG agent.
         Put primary focus on the quality of the query for the RAG agent.
+        {expertise}
         Do NOT output a plan with more than 3 steps and try to minimise the number of steps to as low as possible, preferrably 2 or 3.
         Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         """

@@ -37,6 +37,14 @@ def metrag_score(document, query, agent, doc_):
         """
         prompt = prompt + added_info 
     
+    if agent == "legal":
+        added_info = """
+        You must keep in mind that you are a legal expert and that the response you generate should be tailored accordingly.
+        For instance, for relevancy you also need to consider whether the document contains the relevant terms and whether it is focused on the terminologies and case information which are contained in the query.
+        If there is no reference to the either of the terminologies or case information in the document, it is not relevant. In such cases, output the same response as that for a low utility document.
+        """
+        prompt = prompt + added_info 
+
     if agent == "macro":
         added_info = """
         You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
@@ -44,7 +52,25 @@ def metrag_score(document, query, agent, doc_):
         If there is no reference to the companies or the product field specified in the query within the document, it is not relevant. In such cases, output the same response as that for a low utility document.
         Additionally, ensure that the insights you provide are actionable and reflect current market trends, opportunities, and competitive dynamics.
         """
-        prompt = prompt + added_info   
+        prompt = prompt + added_info
+    
+    if agent == "M&A":
+        added_info = """
+        You must keep in mind that you are an expert in mergers and acquisitions, and that the response you generate should be tailored accordingly.
+        For instance, for relevancy, you need to consider whether the document contains relevant information about the companies involved in the merger and acquisition agreement.
+        If there is no reference to the companies or the agreement details in the document, it is not relevant. In such cases, output the same response as that for a low utility document.
+        Additionally, ensure that the information retrieved from each document is accurate and can be used to draft the final agreement effectively.
+        """
+        prompt = prompt + added_info
+    
+    if agent == "CA":
+        added_info = """
+        You must keep in mind that you are an expert in customer assistance, and that the response you generate should be tailored accordingly.
+        For instance, for relevancy, you need to consider whether the document contains relevant information about the user and/or the query and its relevant income tax deductions, and related sections
+        If there is no reference to any such information in the document, it is not relevant. In such cases, output the same response as that for a low utility document.
+        Additionally, ensure that the document provides clear and accurate information that can assist in answering the query effectively.
+        """
+        prompt = prompt + added_info
         
     response = call_llm(prompt)
     return doc_, SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
