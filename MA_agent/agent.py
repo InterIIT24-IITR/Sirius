@@ -1,7 +1,7 @@
 import os
 import uuid
 import pathway as pw
-from fastapi import FastAPI, File, UploadFile, WebSocket
+from fastapi import FastAPI, File, Form, UploadFile, WebSocket
 from pathlib import Path
 import time
 import asyncio
@@ -20,8 +20,9 @@ import MA_agent.prompts as prompts
 from langchain_openai import ChatOpenAI
 import uvicorn
 import pymongo
+from fastapi.middleware.cors import CORSMiddleware
 
-uri = "mongodb://localhost:27017/"
+uri = "mongodb+srv://kituuu:YHkBEK8DtlfiXFjE@omegacluster.rtzywxy.mongodb.net/"
 client = pymongo.MongoClient(uri)
 
 from pathway.xpacks.llm.vector_store import VectorStoreClient
@@ -35,6 +36,8 @@ vector_client = VectorStoreClient(
 )
 
 check_event = asyncio.Event()
+
+
 async def retrieve_documents(query: str):
     # print(query)
     results = vector_client.query(query, 10)
@@ -46,6 +49,13 @@ llm = ChatOpenAI(model="gpt-4o-mini")
 import json
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 with open("./MA_agent/definitive_agreement_outline.txt", "r") as f:
     definitive_agreement_outline = f.read()
 with open("./MA_agent/term_sheet_outline.txt", "r") as f:
@@ -89,7 +99,7 @@ async def generate_agreement(company1, company2, id):
         )
         queries: list[str] = plan_to_queries(plan)
         return queries
-    
+
     tasks = [create_queries(output_doc) for output_doc in LIST_OF_DOCUMENTS_OUTPUT]
     cache_file = f"MA_agent/{id}_queries_cache.txt"
     if os.path.exists(cache_file):
@@ -100,16 +110,18 @@ async def generate_agreement(company1, company2, id):
         with open(cache_file, "w") as f:
             json.dump(all_docs_queries, f)
 
-#    tasks = [create_queries(output_doc) for output_doc in LIST_OF_DOCUMENTS_OUTPUT]
+    #    tasks = [create_queries(output_doc) for output_doc in LIST_OF_DOCUMENTS_OUTPUT]
 
     # Wait for all tasks to complete in parallel and collect queries
     # all_docs_queries: list[list[str]] = await asyncio.gather(*tasks)
-# 
+    #
     # Flatten the nested list of queries
     all_queries = list(chain.from_iterable(all_docs_queries))
 
     # Use asyncio.gather to await all `retrieve_documents` calls
-    all_results = await asyncio.gather(*(retrieve_documents(query) for query in all_queries))
+    all_results = await asyncio.gather(
+        *(retrieve_documents(query) for query in all_queries)
+    )
 
     start_idx = 0
     final_results: list[list[any]] = []
@@ -146,19 +158,27 @@ async def generate_agreement(company1, company2, id):
         for output_doc, document in zip(LIST_OF_DOCUMENTS_OUTPUT, documents)
     }
     insights = await generate_insights(summaries, company1, company2)
-    send_documents(output_to_document, insights, id)
+    await send_documents(output_to_document, insights, id)
 
 
 @app.post("/submit")
-async def ingest(company1: str, company2: str, files: List[UploadFile]):
+async def ingest(
+    company1: str = Form(...),  # Extract `company1` from form data
+    company2: str = Form(...),  # Extract `company2` from form data
+    files: List[UploadFile] = File(...),  # Extract `files` as a list of uploaded files
+):
+    # Generate a unique ID for this request
     id = str(uuid.uuid4())
+
+    # Save each uploaded file to the server
     for file in files:
         file_location = f"./MA_agent/MA/{id}_{file.filename}"
         with open(file_location, "wb") as f:
             f.write(await file.read())
 
-    asyncio.create_task(generate_agreement(company1, company2, id))
+    # asyncio.create_task(generate_agreement(company1, company2, id))
 
+    # Return a response with the generated conversation ID
     return {
         "message": "Files uploaded successfully, agreement generation in progress.",
         "conversation_id": id,
@@ -178,12 +198,13 @@ async def generate_document(
     document = llm.invoke(prompt).content
     return document
 
+
 # Final_results[idx]
 async def generate_summary(documents, doc_type, company_name):
     prompt = prompts.SUMMARY_PROMPT.format(
         company_name=company_name,
         document_type=doc_type,
-        context=" ".join(doc['text'] for doc in documents),
+        context=" ".join(doc["text"] for doc in documents),
     )
     summary = llm.invoke(prompt).content
     return summary
@@ -206,7 +227,7 @@ async def generate_insights(summaries, company1, company2):
 
 async def send_documents(output_to_document, insights, conversation_id):
     # store the documents in the database using the mongo client and conversation_id
-    global check_event 
+    global check_event
     db = client["MA"]
     collection = db["documents"]
     output_to_document["insights"] = insights
@@ -222,11 +243,12 @@ async def check(ws: WebSocket):
     await ws.accept()
     global check_event
     while True:
-        await check_event.wait()  
-        await ws.send_json({"result": "OK"})  
+        await check_event.wait()
+        await ws.send_json({"result": "OK"})
         check_event.clear()
+
 
 # Run the FastAPI application
 if __name__ == "__main__":
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8001)
