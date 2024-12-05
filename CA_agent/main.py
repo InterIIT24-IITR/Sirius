@@ -1,23 +1,58 @@
 import os, uuid, time
 from common.llm import call_llm
 from pathway.xpacks.llm.parsers import ParseUnstructured
-from pathway.xpacks.llm.vector_store import VectorStoreClient
-from common.plan_rag import plan_rag_query, single_plan_rag_step_query
 from CA_agent.multi_retrieval import multi_retrieval_CA_agent
+import asyncio
+from fastapi import FastAPI, File, UploadFile, Form, WebSocket
+import pymongo
+import shutil
+import uvicorn
+import PyPDF2
+import json 
+import re
+import asyncio
 
-def parse_document(docpath):
-    with open(docpath) as f:
-        paraphrase = f.read()
+check_event = asyncio.Event()
+RELEVANT_SECTIONS = [["80C", "80CC", "80CCA", "80CCB", "80CCC", "80CCD", "80CCE"], ["80CCF", "80CCG", "80CCH"], ["80D", "80DD", "80DDB"], ["80E", "80EE", "80EEA", "80EEB"], ["80G", "80GG", "80GGA", "80GGB", "80GGC"]]
+
+SAVE_DIR = "./uploadeddocs"
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+uri = "mongodb://localhost:27017/"
+client = pymongo.MongoClient(uri)
+db = client["CA_agent"]
+db = db["results"]
+app = FastAPI()
+def parse_response(response_string):
+    response_string = re.sub(r'\s+', ' ', response_string).strip()    
+    json_parts = re.findall(r'\{[^{}]*\}', response_string)
+    try:
+        parsed_parts = [json.loads(part) for part in json_parts]
+        parsed_data = {}
+        for part in parsed_parts:
+            parsed_data.update(part)
+        
+        return parsed_data
+    
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}")
+        return None
+
+async def parse_pdf(docpath):
+    with open(docpath, "rb") as f:  
+        pdf_reader = PyPDF2.PdfReader(f)
+        full_text = ""
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            full_text += page.extract_text()  # Extract text from each page
         parser = ParseUnstructured(mode='single')
-        parsed = parser.__call__(paraphrase)
-        parsed_ = parser.__call__(paraphrase)
-        parsed_ = str(parsed_)
+        parsed = parser.__call__(full_text)
+        parsed_ = str(parsed)
         parsed_ = parsed_[28:-2]
         return parsed_
 
-def add_user_document(documentpath):
-    # Apart from this make sure the document is added to the vector store
-    parsed_doc = parse_document(documentpath)
+async def add_user_document(documentpath):
+    parsed_doc = await parse_pdf(documentpath)
     prompt = f"""
     You are a helpful AI agent.
     You are a knowledgeable agent aware of the field of chartered accountancy and finance. Particularly, you are
@@ -37,14 +72,12 @@ def add_user_document(documentpath):
     point_doc = call_llm(prompt)
     return summarised_doc, point_doc
 
-def add_to_info(documentpath, info_dict):
-    summ_doc, point_doc = add_user_document(documentpath)
+async def add_to_info(documentpath,info_dict):
+    summ_doc, point_doc = await add_user_document(documentpath)
     info_dict[point_doc] = summ_doc
     return info_dict
 
-RELEVANT_SECTIONS = [["80C", "80CC", "80CCA", "80CCB", "80CCC", "80CCD", "80CCE"], ["80CCF", "80CCG", "80CCH"], ["80D", "80DD", "80DDB"], ["80E", "80EE", "80EEA", "80EEB"], ["80G", "80GG", "80GGA", "80GGB", "80GGC"]]
-
-def single_section_handler(info_dict, section):
+async def single_section_handler(info_dict, section):
     temp = "\n\n".join(info_dict.keys())
     query = f"""
     Identify and classify the sections of the income tax act that are applicable for tax deduction in context of a user who has given you documents related to the same.
@@ -68,10 +101,10 @@ def single_section_handler(info_dict, section):
     response = call_llm(prompt_new)
     return response
 
-def overall_handler(info_dict):
+async def overall_handler(info_dict):
     responses = []
     for section in RELEVANT_SECTIONS:
-        response = single_section_handler(info_dict, section)
+        response = await single_section_handler(info_dict, section)
         print(response)
         responses.append(response)
     temp = "\n\n".join(responses)
@@ -94,15 +127,40 @@ def overall_handler(info_dict):
     response = call_llm(prompt_new)
     return response
 
-def user_input_descript(input, info_dict):
-    info_dict["The user's description of their tax situation"] = input
-    return info_dict
+async def evaluate(file_path,query,id):
+    global check_event
+    info_dict = {}
+    info_dict = await add_to_info(file_path,info_dict)
+    info_dict["The user's description of their tax situation"] = query
+    response = await overall_handler(info_dict)
+    response = parse_response(response)
+    print(response)
+    db.update_one({"id": id}, {"$set": response}, upsert=True)
+    print("DONE")
+    check_event.set()
+    
 
-### For the developers
-# Doc input hoga, usko vectorstore mein daalna. Thereafter uska summary and point descriptor nikalne
-#    ke liye I need to have a docpath and info_dict to call the add_to_info function
-# Maintain an info_dict for the user, which is initially empty, and is only updated by the add_to_info
-#    function and the user_input_descript function
-# Uske baad simply call the overall_handler with the finalised info_dict and it will return the required
-#    response (ideally JSON should be correct)
-# Based on the response, display on the user interface
+@app.post("/submit")
+async def upload_file(file: UploadFile = File(...), query : str = Form(...)):
+    file_path = os.path.join(SAVE_DIR, file.filename)
+    id = str(uuid.uuid4())
+    with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    asyncio.create_task(evaluate(file_path,query,id))
+
+    return {
+        "message": "Files uploaded successfully, generation in progress.",
+        "conversation_id": id,
+    }
+
+@app.websocket("/ws/check")
+async def check(ws: WebSocket):
+    await ws.accept()
+    global check_event
+    while True:
+        await check_event.wait()  
+        await ws.send_json({"result": "OK"})  
+        check_event.clear()
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8230)

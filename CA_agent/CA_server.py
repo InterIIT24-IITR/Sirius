@@ -10,7 +10,7 @@ logging.basicConfig(stream=sys.stderr, level=logging.WARN, force=True)
 data_sources = []
 data_sources.append(
     pw.io.fs.read(
-        "./IncomeTaxDocuments",
+        "./CA_agent/IncomeTaxDocuments",
         format="binary",
         mode="streaming",
         with_metadata=True,
