@@ -157,7 +157,7 @@ async def ingest(company1: str, company2: str, files: List[UploadFile]):
         with open(file_location, "wb") as f:
             f.write(await file.read())
 
-    # asyncio.create_task(generate_agreement(company1, company2, id))
+    asyncio.create_task(generate_agreement(company1, company2, id))
 
     return {
         "message": "Files uploaded successfully, agreement generation in progress.",
@@ -206,6 +206,7 @@ async def generate_insights(summaries, company1, company2):
 
 async def send_documents(output_to_document, insights, conversation_id):
     # store the documents in the database using the mongo client and conversation_id
+    global check_event 
     db = client["MA"]
     collection = db["documents"]
     output_to_document["insights"] = insights
@@ -219,7 +220,7 @@ async def send_documents(output_to_document, insights, conversation_id):
 @app.websocket("/ws/check")
 async def check(ws: WebSocket):
     await ws.accept()
-    global check
+    global check_event
     while True:
         await check_event.wait()  
         await ws.send_json({"result": "OK"})  

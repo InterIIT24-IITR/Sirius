@@ -117,7 +117,7 @@ async def upload_file(file: UploadFile = File(...)):
 @app.websocket("/ws/check")
 async def check(ws: WebSocket):
     await ws.accept()
-    global check
+    global check_event
     while True:
         await check_event.wait()  
         await ws.send_json({"result": "OK"})  
