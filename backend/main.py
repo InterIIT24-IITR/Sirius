@@ -9,10 +9,10 @@ import time
 
 app = FastAPI()
 query = None
-# uri = ""
-# client = MongoClient(uri)
-# db = client["chat_database"]
-# session_db = db["session"]
+uri = ""
+client = MongoClient(uri)
+db = client["chat_database"]
+session_db = db["session"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,24 +38,24 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         query = await websocket.receive_text()
         prompt = ""
-        # all_chats = session_db.find().sort("timestamp", pymongo.ASCENDING)
-        # for chat in all_chats:
-        #     prompt += "user: " + chat["user_message"] + "\n"
-        #     prompt += "chatbot: " + chat["chatbot_response"] + "\n"
+        all_chats = session_db.find().sort("timestamp", pymongo.ASCENDING)
+        for chat in all_chats:
+            prompt += "user: " + chat["user_message"] + "\n"
+            prompt += "chatbot: " + chat["chatbot_response"] + "\n"
 
-        # prompt = prompt + query + "\n"
-        # try:
-        #     response = await pipeline(prompt)
-        #     document = {
-        #     "user_message": query,
-        #     "chatbot_response": response,
-        #     "timestamp": datetime.utcnow(),
-        #     }
-        #     session_db.insert_one(document)
-        response = await pipeline(prompt, websocket)
-        await websocket.send_json({"status": "completed", "result": response})
-        #except Exception as e:
-        #await websocket.send_json({"Error": {str(e)}})
+        prompt = prompt + query + "\n"
+        try:
+            response = await pipeline(prompt)
+            document = {
+            "user_message": query,
+            "chatbot_response": response,
+            "timestamp": datetime.utcnow(),
+            }
+            session_db.insert_one(document)
+            response = await pipeline(prompt, websocket)
+            await websocket.send_json({"status": "completed", "result": response})
+        except Exception as e:
+            await websocket.send_json({"Error": {str(e)}})
     
     finally:
         await websocket.close()
