@@ -61,6 +61,7 @@ def plan_rag_query(query, agent="finance", **kwargs):
         if userinfo is None:
             userinfo = "You do not have any user information."
         section = kwargs.get("section")
+        userinfo_str = "\n\n".join(userinfo) 
         prompt = f"""
         You are a helpful AI agent.
         You are tasked with writing a detailed step-by-step plan to answer the query '{query}' for a user.
@@ -69,10 +70,10 @@ def plan_rag_query(query, agent="finance", **kwargs):
         The relevant information is that you are an expert in the field of chartered accountancy and finance, particularly in the area of income tax laws and regulations in India.
         You need to search for the information related to the sections on section {', '.join(section)} in the documents inputted by the user.
         The relevant documents input by the user are described as:
-        {"\n\n".join(userinfo)}
+        {userinfo_str}
         Ensure your step has 2-3 plans. Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         An example plan would be that the first step is to retrieve the user's relevant documents and the second step is to retrieve the relevant information from the income tax laws.
-        """
+        """ 
 
     plan_query = llm.invoke(
         f"""
