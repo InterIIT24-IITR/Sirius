@@ -2,6 +2,7 @@ from langchain_openai import ChatOpenAI
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import numpy as np
 from swarm.util import debug_print
+from concurrent.futures import ThreadPoolExecutor
 
 
 def metrag_score(document, query, agent):
@@ -47,12 +48,14 @@ def metrag_score(document, query, agent):
         prompt = prompt + added_info   
         
     response = llm_utility.invoke(prompt).content
-    return SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
+    return document, SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
 
 
 def metrag_filter(documents, query, agent):
     debug_print(True, f"Processing tool call: {metrag_filter.__name__}")
-    score_dict = [(doc, metrag_score(doc, query, agent)) for doc in documents]
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(lambda doc: metrag_score(doc, query, agent), documents)
+    score_dict = [result for result in results]
     if len(score_dict) == 0:
         return []
     metrag_threshold = np.percentile(list([b for (a, b) in score_dict]), 25)
