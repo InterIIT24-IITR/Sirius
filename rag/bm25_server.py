@@ -15,6 +15,14 @@ data_sources.append(
         with_metadata=True,
     )
 )
+data_sources.append(
+    pw.io.fs.read(
+        "../MA_agent/MA",
+        format="binary",
+        mode="streaming",
+        with_metadata=True,
+    )
+)
 
 splitter = TokenCountSplitter(min_tokens=1000, max_tokens=1500)
 bm25_store = DocumentStore(data_sources, retriever_factory=bm25, splitter=splitter)
