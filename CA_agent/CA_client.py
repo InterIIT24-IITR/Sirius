@@ -8,5 +8,6 @@ vector_client = VectorStoreClient(
     port=VECTOR_PORT,
 )
 
+
 def retrieve_documents(query: str):
     return vector_client.query(query, 10)

@@ -157,6 +157,7 @@ docker run --name <container> <image>
 - The extracted text is analyzed section-by-section using an AI model to check against the checklist.
 - Flags issues related to compliance, clarity, and completeness in the contract.
 
-## Guardrail
-
-Download [this](https://drive.google.com/drive/folders/1-0Tb0yTVybU_A5FhvSO33lksLvdMzDSZ?usp=sharing) folder and put it in guardrail directory
+### Guardrail
+- Guardrails are used to check the query and LLM output for safety concerns.
+- It takes conversation as input, enabling nuanced context analysis for a deeper understanding of interactions.
+-  We use finetuned LLaMA model. The LLama Guard - dynamically classifies conversations into 13 potential unsafe categories, such as hate speech, misinformation, privacy violations, and harmful advice.

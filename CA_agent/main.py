@@ -1,4 +1,4 @@
-import os, uuid, time
+import os, uuid
 from common.llm import call_llm
 from pathway.xpacks.llm.parsers import ParseUnstructured
 from CA_agent.multi_retrieval import multi_retrieval_CA_agent
@@ -8,12 +8,18 @@ import pymongo
 import shutil
 import uvicorn
 import PyPDF2
-import json 
+import json
 import re
 import asyncio
 
 check_event = asyncio.Event()
-RELEVANT_SECTIONS = [["80C", "80CC", "80CCA", "80CCB", "80CCC", "80CCD", "80CCE"], ["80CCF", "80CCG", "80CCH"], ["80D", "80DD", "80DDB"], ["80E", "80EE", "80EEA", "80EEB"], ["80G", "80GG", "80GGA", "80GGB", "80GGC"]]
+RELEVANT_SECTIONS = [
+    ["80C", "80CC", "80CCA", "80CCB", "80CCC", "80CCD", "80CCE"],
+    ["80CCF", "80CCG", "80CCH"],
+    ["80D", "80DD", "80DDB"],
+    ["80E", "80EE", "80EEA", "80EEB"],
+    ["80G", "80GG", "80GGA", "80GGB", "80GGC"],
+]
 
 SAVE_DIR = "./uploadeddocs"
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -23,33 +29,37 @@ client = pymongo.MongoClient(uri)
 db = client["CA_agent"]
 db = db["results"]
 app = FastAPI()
+
+
 def parse_response(response_string):
-    response_string = re.sub(r'\s+', ' ', response_string).strip()    
-    json_parts = re.findall(r'\{[^{}]*\}', response_string)
+    response_string = re.sub(r"\s+", " ", response_string).strip()
+    json_parts = re.findall(r"\{[^{}]*\}", response_string)
     try:
         parsed_parts = [json.loads(part) for part in json_parts]
         parsed_data = {}
         for part in parsed_parts:
             parsed_data.update(part)
-        
+
         return parsed_data
-    
+
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
         return None
 
+
 async def parse_pdf(docpath):
-    with open(docpath, "rb") as f:  
+    with open(docpath, "rb") as f:
         pdf_reader = PyPDF2.PdfReader(f)
         full_text = ""
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
             full_text += page.extract_text()  # Extract text from each page
-        parser = ParseUnstructured(mode='single')
+        parser = ParseUnstructured(mode="single")
         parsed = parser.__call__(full_text)
         parsed_ = str(parsed)
         parsed_ = parsed_[28:-2]
         return parsed_
+
 
 async def add_user_document(documentpath):
     parsed_doc = await parse_pdf(documentpath)
@@ -72,10 +82,12 @@ async def add_user_document(documentpath):
     point_doc = call_llm(prompt)
     return summarised_doc, point_doc
 
-async def add_to_info(documentpath,info_dict):
+
+async def add_to_info(documentpath, info_dict):
     summ_doc, point_doc = await add_user_document(documentpath)
     info_dict[point_doc] = summ_doc
     return info_dict
+
 
 async def single_section_handler(info_dict, section):
     temp = "\n\n".join(info_dict.keys())
@@ -100,6 +112,7 @@ async def single_section_handler(info_dict, section):
     """
     response = call_llm(prompt_new)
     return response
+
 
 async def overall_handler(info_dict):
     responses = []
@@ -127,10 +140,11 @@ async def overall_handler(info_dict):
     response = call_llm(prompt_new)
     return response
 
-async def evaluate(file_path,query,id):
+
+async def evaluate(file_path, query, id):
     global check_event
     info_dict = {}
-    info_dict = await add_to_info(file_path,info_dict)
+    info_dict = await add_to_info(file_path, info_dict)
     info_dict["The user's description of their tax situation"] = query
     response = await overall_handler(info_dict)
     response = parse_response(response)
@@ -138,29 +152,31 @@ async def evaluate(file_path,query,id):
     db.update_one({"id": id}, {"$set": response}, upsert=True)
     print("DONE")
     check_event.set()
-    
+
 
 @app.post("/submit")
-async def upload_file(file: UploadFile = File(...), query : str = Form(...)):
+async def upload_file(file: UploadFile = File(...), query: str = Form(...)):
     file_path = os.path.join(SAVE_DIR, file.filename)
     id = str(uuid.uuid4())
     with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-    asyncio.create_task(evaluate(file_path,query,id))
+        shutil.copyfileobj(file.file, buffer)
+    asyncio.create_task(evaluate(file_path, query, id))
 
     return {
         "message": "Files uploaded successfully, generation in progress.",
         "conversation_id": id,
     }
 
+
 @app.websocket("/ws/check")
 async def check(ws: WebSocket):
     await ws.accept()
     global check_event
     while True:
-        await check_event.wait()  
-        await ws.send_json({"result": "OK"})  
+        await check_event.wait()
+        await ws.send_json({"result": "OK"})
         check_event.clear()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8230)

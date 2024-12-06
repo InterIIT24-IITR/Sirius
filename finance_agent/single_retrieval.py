@@ -5,6 +5,7 @@ from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from common.llm import call_llm
 
+
 def single_retrieval_finance_agent(query):
     """Answer simple finance related queries by running them through HyDe and then retrieve the documents"""
 

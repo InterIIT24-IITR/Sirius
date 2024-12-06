@@ -20,40 +20,44 @@ db = client["flags"]
 db = db["results"]
 app = FastAPI()
 
-os.environ["OPENAI_API_KEY"]="sk-"
+os.environ["OPENAI_API_KEY"] = "sk-"
+
 
 class Eval(BaseModel):
-        item: str
-        is_met: int
-        explaination: str
-        reference : Optional[str]
+    item: str
+    is_met: int
+    explaination: str
+    reference: Optional[str]
+
 
 class Evals(BaseModel):
     evals: list[Eval]
     checklist_relevance: float
 
-def transform_to_prisma_schema(id,evals):
 
-    for category,evals in evals.items():
+def transform_to_prisma_schema(id, evals):
+
+    for category, evals in evals.items():
         result = {
             "group _id": id,
             "category": category,
             "checklistRelevance": evals.checklist_relevance,
-            "evaluations": []
+            "evaluations": [],
         }
 
         # Create the Evaluation entries
         for eval_item in evals.evals:
             evaluation = {
-                "id": str(uuid.uuid4()),  
+                "id": str(uuid.uuid4()),
                 "resultId": id,
                 "item": eval_item.item,
                 "isMet": eval_item.is_met,
                 "explanation": eval_item.explanation,
-                "reference": eval_item.reference
+                "reference": eval_item.reference,
             }
             result["evaluations"].append(evaluation)
         db.update_one({"id": id}, {"$set": result}, upsert=True)
+
 
 async def extract_pdf_text(content: bytes) -> str:
     try:
@@ -65,7 +69,8 @@ async def extract_pdf_text(content: bytes) -> str:
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
-async def evaluate(text:str,id:str) -> Evals:
+
+async def evaluate(text: str, id: str) -> Evals:
     global check_event
     lines = text.splitlines()
     numbered_contract = "\n".join([f"{i+1}. {line}" for i, line in enumerate(lines)])
@@ -101,31 +106,33 @@ async def evaluate(text:str,id:str) -> Evals:
         except Exception as e:
             print(e)
     print(evaluations)
-    transform_to_prisma_schema(id,evaluations)
+    transform_to_prisma_schema(id, evaluations)
     print("DONE")
     check_event.set()
-    
+
 
 @app.post("/submit")
 async def upload_file(file: UploadFile = File(...)):
-    content = await file.read()   
+    content = await file.read()
     id = str(uuid.uuid4())
     text = await extract_pdf_text(content)
-    asyncio.create_task(evaluate(text,id))
+    asyncio.create_task(evaluate(text, id))
 
     return {
         "message": "Files uploaded successfully, agreement generation in progress.",
         "conversation_id": id,
     }
 
+
 @app.websocket("/ws/check")
 async def check(ws: WebSocket):
     await ws.accept()
     global check_event
     while True:
-        await check_event.wait()  
-        await ws.send_json({"result": "OK"})  
+        await check_event.wait()
+        await ws.send_json({"result": "OK"})
         check_event.clear()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8230)
