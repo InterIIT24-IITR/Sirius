@@ -1,39 +1,79 @@
 # Sasuke
+A powerful, AI-driven assistant for legal and financial queries, leveraging Pathway's fast data ingestion and pipeline building. Designed to automate repetitive tasks, it includes the following specialized agents:
 
-Multi-Agent tool for answering your queries specialising in knowledge queries in legal and financial topics exploiting Pathway's solutions for fast RAG application.
+1. **CA Agent**: Streamlines tax filing, identifies savings opportunities, and acts as your virtual Chartered Accountant.
+2. **M&A Agent**: Assists with drafting key documents like Definitive Agreements, Letters of Intent, and NDAs for mergers and acquisitions.
+3. **Contract Review Agent**: Analyzes legal contracts, flagging suspicious or risky terms for your review.
+4. **Market Insights Agent**: Conducts competitive market analysis, offering actionable insights for strategic decision-making.
+
+Along with these specialized agents, it contains a tailored pipelines for legal and financial queries along with a general pipeline for all your daily needs.
+Efficient, accurate, and built to save you time and effort.
 
 ## Directory Structure
 
 ```
 .
-├── README.md
-├── __init__.py
 ├── agent.py
+├── backend
+│   └── main.py - logic for backend handling conversation API and websocket
+├── CA_agent
+│   ├── CA_client.py - client to query the vector store
+│   ├── CA_server.py - Pathway vector's server to store the documents for the agent
+│   ├── IncomeTaxDocuments - directory containing all the relevant income tax documents
+│   ├── main.py - main logic of the CA agent
+│   └── multi_retrieval.py - specific implementation of multi-retrieval for the agent
 ├── common
-│   ├── __init__.py
-│   ├── classifier_agent.py
-│   ├── general_agent.py
-│   ├── hyde.py
-│   └── reranker.py
+│   ├── adarag.py - logic for AdaRAG agent
+│   ├── corrective_rag.py - logic for corrective RAG
+│   ├── hyde.py - logic for HyDe agent
+│   ├── linked_chunks.py - create a linked list of chunks to create better context
+│   ├── llm.py 
+│   ├── metrag.py
+│   ├── plan_rag.py
+│   ├── reranker.py
+│   └── websearch.py - websearch agent for scraping along with fallback
+├── docker-compose.yml - config to spin up mongo container
 ├── finance_agent
-│   ├── __init__.py
 │   ├── agent.py
-│   └── single_retrieval.py
-├── guardrail
-│   ├──guard.py
-│   ├── Llama-Guard-3-1B
-|
-├── legal_agent
-│   ├── __init__.py
+│   ├── multi_retrieval.py
+│   └── single_retrieval.py 
+├── flags_agent
+│   ├── agent.py - main logic of the flags agent
+│   ├── contracts.py - the checklist to ensure T&C aren't suspicious
+├── general_agent - General pipeline
 │   ├── agent.py
+│   ├── multi_retrieval.py
+│   ├── single_retrieval.py
+│   └── zero_retrieval.py
+├── guardrail - Guardrail to prevent harmful content from LLMs
+│   └── guard.py
+├── legal_agent - Legal pipeline
+│   ├── agent.py
+│   ├── multi_retrieval.py
 │   └── single_retrieval.py
+├── MA_agent
+│   ├── agent.py - driving logic of merger and acquisition agent
+│   ├── constants.py 
+│   ├── definitive_agreement_outline.txt  - outline of all the merger and acquisition documents
+│   .  
+│   .
+│   
+│   ├── prompts.py - prompts used by agent
+├── macro_agent
+│   ├── agent.py - core logic of macro conditions analysis agent 
+│   └── multi_retrieval.py - specific implementation of multi-retrieval
+├── main_backend.py - main logic for the backend
+├── mongo - mongodb integrations
 ├── rag
-│   ├── Dockerfile
-│   ├── client.py
-│   ├── documents
-│   ├── requirements.txt
-│   └── server.py
-└── requirements.txt
+│   ├── bm25_server.py - Pathway's BM25 server
+│   ├── client.py - client for RAG
+│   ├── rrf.py - logic for RRF
+│   ├── splade_embed.py - splade embedder
+│   ├── splade_server.py - Pathway's SPLADE server
+│   └── vector_server.py - Pathway's vector server
+├── README.md - project documentation
+├── requirements.txt - project dependencies
+└── reranker.py - logic for reranking documents
 
 
 ```

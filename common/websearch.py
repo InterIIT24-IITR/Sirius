@@ -32,13 +32,3 @@ def brave_search(query):
         docdict["text"] = doc.page_content
         finaldocs.append(docdict)
     return finaldocs
-
-
-# def linkup_search(query):
-# client = LinkupClient(api_key=os.environ["d29029da-250d-48d4-87ec-73be9a526871"])
-# response = client.search(
-# query=query,
-# depth="deep",
-# output_type="sourcedAnswer"
-# )
-# return response.answer

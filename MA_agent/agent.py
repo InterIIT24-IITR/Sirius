@@ -1,20 +1,17 @@
+import json
 import os
 import uuid
-import pathway as pw
 from fastapi import FastAPI, File, Form, UploadFile, WebSocket
-from pathlib import Path
-import time
 import asyncio
 from typing import List
 from common.plan_rag import plan_rag_query, single_plan_rag_step_query
+from rag.client import retrieve_documents
 
-# from rag.client import retrieve_documents
 from MA_agent.constants import (
     LIST_OF_DOCUMENTS_INPUT,
     LIST_OF_DOCUMENTS_OUTPUT,
     DOCUMENT_PROMPT_MAPPING,
 )
-from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 import MA_agent.prompts as prompts
 from common.llm import call_llm
@@ -37,15 +34,6 @@ vector_client = VectorStoreClient(
 
 check_event = asyncio.Event()
 
-
-async def retrieve_documents(query: str):
-    # print(query)
-    results = vector_client.query(query, 10)
-    print("DONE")
-    return results
-
-
-import json
 
 app = FastAPI()
 app.add_middleware(
