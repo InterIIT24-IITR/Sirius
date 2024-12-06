@@ -139,6 +139,7 @@ docker run --name <container> <image>
 ### Macros Agent
 
 ### Flags Agent
+This agent is designed to evaluate legal contracts and identify potential issues based on a predefined checklist collected after extensive research on problematic things that can be  or have been(in past) present in legal documents. Users upload contracts in PDF format, which are processed to extract text. The extracted content is evaluated using an AI model that checks each section against the checklist to ensure compliance, clarity, and completeness.
 
 ## Guardrail
 
