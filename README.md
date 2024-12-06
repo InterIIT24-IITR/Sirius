@@ -137,6 +137,10 @@ docker run --name <container> <image>
 - The HyDE agent enables better document retrieval, MetRAG consolidates utility information, corrective RAG acts as a fallback mechanism and Cohere rerankers aims to limit the context length by only passing relevant documents
 
 ### Merger and Acquisition Agent
+- Automates the generation of essential documents for merger and acquisition transactions, such as Term Sheets, Definitive Agreements, Letters of Intent, NDAs, and Due Diligence Request Lists.
+- Takes financial and legal data from two companies as input and produces customized, structured outputs aligned with official document formats.
+- Utilizes a planning agent and large language models to generate documents based on predefined outlines and templates.
+- Synthesizes relevant data from extensive document repositories through contextual queries to deliver high-quality summaries and insights.
 
 ### CA Agent
 - Relevant sections of the Income Tax Code of India, related to common tax deductions for individuals, viz. section 80C to 80G are included in the document store, apart from the entire Income Tax Code itself
@@ -153,5 +157,6 @@ docker run --name <container> <image>
 This agent is designed to evaluate legal contracts and identify potential issues based on a predefined checklist collected after extensive research on problematic things that can be  or have been(in past) present in legal documents. Users upload contracts in PDF format, which are processed to extract text. The extracted content is evaluated using an AI model that checks each section against the checklist to ensure compliance, clarity, and completeness.
 
 ## Guardrail
-
-Download [this](https://drive.google.com/drive/folders/1-0Tb0yTVybU_A5FhvSO33lksLvdMzDSZ?usp=sharing) folder and put it in guardrail directory
+- Guardrails are used to check the query and LLM output for safety concerns.
+- It takes conversation as input, enabling nuanced context analysis for a deeper understanding of interactions.
+- We use finetuned LLaMA model. The LLama Guard dynamically classifies conversations into 13 potential unsafe categories, such as hate speech, misinformation, privacy violations, and harmful advice.
