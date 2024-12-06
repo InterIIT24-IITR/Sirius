@@ -25,6 +25,7 @@ Efficient, accurate, and built to save you time and effort.
 ├── common
 │   ├── adarag.py - logic for AdaRAG agent
 │   ├── corrective_rag.py - logic for corrective RAG
+│   ├── evaluator.py - logic for evaluating agents response
 │   ├── hyde.py - logic for HyDe agent
 │   ├── linked_chunks.py - create a linked list of chunks to create better context
 │   ├── llm.py 
@@ -73,7 +74,8 @@ Efficient, accurate, and built to save you time and effort.
 │   └── vector_server.py - Pathway's vector server
 ├── README.md - project documentation
 ├── requirements.txt - project dependencies
-└── reranker.py - logic for reranking documents
+├── reranker.py - logic for reranking documents
+└── setup.py - script to spin up complete backend
 
 
 ```
