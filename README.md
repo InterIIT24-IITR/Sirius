@@ -125,7 +125,7 @@ docker run --name <container> <image>
 
 ## Approach
 
-### Pipeline
+### RAG-based Pipeline
 - The query is processed by AdaRAG and either sent to general, financial or legal query agent.
 - The general agent has a zero retrieval, single retrieval and multi retrieval pipeline while the two domain-optimized agents lack the zero retrieval pipeline.
 - The zero retrieval pipeline trivially outputs an LLM generated response
