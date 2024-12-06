@@ -40,7 +40,6 @@ def multi_retrieval_CA_agent(query, sections, info_dict):
     resp_dict = {}
     documents = []
     response = []
-    print("Plan:", plan)
     with ThreadPoolExecutor() as executor:
         futures = {
             executor.submit(step_executor, step): i
@@ -55,7 +54,6 @@ def multi_retrieval_CA_agent(query, sections, info_dict):
     for i in sorted(dict_store.keys()):
         documents.extend(dict_store[i])
         response.extend(resp_dict[i])
-        print("Response:", resp_dict[i])
 
     result = rerank_docs(query, documents)
 

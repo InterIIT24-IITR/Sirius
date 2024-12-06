@@ -118,7 +118,6 @@ async def overall_handler(info_dict):
     responses = []
     for section in RELEVANT_SECTIONS:
         response = await single_section_handler(info_dict, section)
-        print(response)
         responses.append(response)
     temp = "\n\n".join(responses)
     prompt_new = f"""
@@ -148,9 +147,7 @@ async def evaluate(file_path, query, id):
     info_dict["The user's description of their tax situation"] = query
     response = await overall_handler(info_dict)
     response = parse_response(response)
-    print(response)
     db.update_one({"id": id}, {"$set": response}, upsert=True)
-    print("DONE")
     check_event.set()
 
 

@@ -70,7 +70,5 @@ def multi_retrieval_macro_agent(query):
             Do not use outside knowledge to answer the query. If there is missing context, don't try to make up facts and figures.
             You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
             """
-
-    print("Prompt:\n", prompt)
     response = call_llm(prompt)
     return response

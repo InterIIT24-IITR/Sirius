@@ -58,10 +58,6 @@ async def multi_retrieval_macro_agent(query, id):
             print(f"Step:\n{step}")
             print(f"Query:\n{query}")
             docs, resp = single_retriever_macro_agent(query)
-            for i, doc in enumerate(docs):
-                print(f"\nDocument {i}:")
-                for key, value in doc.items():
-                    print(f"{key}: {value}")
             documents.extend(docs)
             response.append(resp)
 
@@ -83,11 +79,9 @@ async def multi_retrieval_macro_agent(query, id):
             You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
             """
 
-    print("Prompt:\n", prompt)
     llm = ChatOpenAI(model="gpt-4o-mini")
     response = llm.invoke(prompt).content
     db.update_one({"id": id}, {"$set": response}, upsert=True)
-    print("Done")
     check_event.set()
 
 

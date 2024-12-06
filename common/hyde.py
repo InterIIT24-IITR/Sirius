@@ -12,5 +12,4 @@ def hyde_query(query):
         If you do not have access to the information, you are allowed to hallucinate facts and figures.
         """
     )
-    # print("HyDE Doc\n",hypothetical_doc)
     return hypothetical_doc

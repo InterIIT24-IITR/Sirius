@@ -104,10 +104,8 @@ async def evaluate(text: str, id: str) -> Evals:
             evals = Evals(**json.loads(output[7:-3]))
             evaluations[title] = evals
         except Exception as e:
-            print(e)
-    print(evaluations)
+            print(f"Error parsing JSON: {e}")
     transform_to_prisma_schema(id, evaluations)
-    print("DONE")
     check_event.set()
 
 
