@@ -1,7 +1,7 @@
 # Sasuke
 A powerful, AI-driven assistant for legal and financial queries, leveraging Pathway's fast data ingestion and pipeline building. Designed to automate repetitive tasks, it includes the following specialized agents:
 
-1. **CA Agent**: Streamlines tax filing by identifies savings opportunities, and acts as your virtual Chartered Accountant.
+1. **CA Agent**: Streamlines tax filing by identifying savings opportunities, and acts as your virtual Chartered Accountant.
 2. **M&A Agent**: Assists with drafting key documents like Definitive Agreements, Letters of Intent, and NDAs for mergers and acquisitions.
 3. **Contract Review Agent**: Analyzes legal contracts, flagging suspicious or risky terms for your review.
 4. **Market Insights Agent**: Conducts competitive market analysis, offering actionable insights for strategic decision-making.
