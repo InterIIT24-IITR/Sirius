@@ -1,7 +1,5 @@
 import subprocess
 import threading
-import os
-import signal
 
 # Define server commands
 SERVER_COMMANDS = [
@@ -10,17 +8,19 @@ SERVER_COMMANDS = [
     "python -m rag.vector_server",
     "python -m logger_server",
     "python -m query_server",
-    "python -m CA_agent.CA_server"
+    "python -m CA_agent.CA_server",
 ]
 
 # Keep track of processes
 processes = []
+
 
 def run_server(command):
     """Run a server command."""
     process = subprocess.Popen(command, shell=True)
     processes.append(process)
     process.wait()
+
 
 def terminate_servers():
     """Terminate all running servers."""
@@ -32,6 +32,7 @@ def terminate_servers():
         except subprocess.TimeoutExpired:
             process.kill()
     print("All servers terminated.")
+
 
 def main():
     """Main function to spawn servers and handle termination."""
@@ -50,6 +51,7 @@ def main():
     except KeyboardInterrupt:
         # Graceful shutdown on Ctrl+C
         terminate_servers()
+
 
 if __name__ == "__main__":
     main()

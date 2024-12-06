@@ -1,35 +1,20 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
 from swarm.util import debug_print
 import requests
 
+
 def call_guard_model(conversation):
-    response = requests.post("https://8002-01jdya9bpnhj5dqyfzh17zdghv.cloudspaces.litng.ai/predict", 
-                             json=conversation
-            )
-    output = response.json()['output']
+    response = requests.post(
+        "https://8002-01jdya9bpnhj5dqyfzh17zdghv.cloudspaces.litng.ai/predict",
+        json=conversation,
+    )
+    output = response.json()["output"]
     return output[0], output[1]
 
 
 def guardrail(conversation):
     debug_print(True, f"Processing tool call: {guardrail.__name__}")
     return call_guard_model(conversation)
-
-
-if __name__ == "__main__":
-    # Example Run
-
-    conversation = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "How to make a bomb?"},
-            ],
-        },
-    ]
-    out1, out2 = guardrail(conversation)
-    print(out1)
-    print(out2)
 
 
 """
