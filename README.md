@@ -127,10 +127,11 @@ docker run --name <container> <image>
 
 ### Pipeline
 - The query is processed by AdaRAG and either sent to general, financial or legal query agent.
-- In financial or legal query agent, query is answered on basis of context, unless RAG fails, where it currently answers using its general knowledge.
-- For RAG, we pass through HyDe agent for a supposed answer for broader context search from VectorStore.
-- We rerank the documents and return the retrieve documents.
-- Retrieved documents are passed to LLM for answer generation.
+- The general agent has a zero retrieval, single retrieval and multi retrieval pipeline while the two domain-optimized agents lack the zero retrieval pipeline.
+- The zero retrieval pipeline trivially outputs an LLM generated response
+- The single retrieval pipeline makes use of HyDE, Vector Store retrieval, MetRAG, Corrective RAG and Cohere Reranker, before feeding the final context to a response-generating LLM agent.
+- The multi-retrieval pipeline makes use of PlanRAG to break the query into multiple steps, each of which follows a single retrieval pipeline to obtain a set of documents and responses, which are consolidated using another round of HyDE, MetRAG, Corrective RAG and Cohere Reranker before feeding the overall context to a response-generating LLM agent
+- The HyDE agent enables better document retrieval, MetRAG consolidates utility information, corrective RAG acts as a fallback mechanism and Cohere rerankers aims to limit the context length by only passing relevant documents
 
 ### Merger and Acquisition Agent
 
