@@ -55,18 +55,6 @@ def transform_to_prisma_schema(id,evals):
             result["evaluations"].append(evaluation)
         db.update_one({"id": id}, {"$set": result}, upsert=True)
 
-
-# async def convert_to_mongo_format(data):
-#     """
-#     Converts the input data into a MongoDB-friendly format.
-#     """
-#     # Iterate over each category in the data
-#     converted_data = {}
-#     for category, category_data in data.items():
-#         category_entry = category_data.dict()
-#         converted_data[category] = category_entry
-
-#     return converted_data
 async def extract_pdf_text(content: bytes) -> str:
     try:
         reader = PyPDF2.PdfReader(io.BytesIO(content))
