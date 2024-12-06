@@ -136,6 +136,10 @@ docker run --name <container> <image>
 ### Merger and Acquisition Agent
 
 ### CA Agent
+- Relevant sections of the Income Tax Code of India, related to common tax deductions for individuals, viz. section 80C to 80G are included in the document store, apart from the entire Income Tax Code itself
+- Apart from this, the user inputs their own information and documents to the database
+- Then, PlanRAG is used on a groups of sections and subsections to streamline the RAG-based process of retrieving relevant tax code information and the user's relevant documents to consolidate them
+- Followed by this, a final output determines which sections are, are not and may be relevant to the user's scenario for tax deductions.
 
 ### Macros Agent
 
