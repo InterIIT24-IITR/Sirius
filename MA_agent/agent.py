@@ -22,7 +22,7 @@ import uvicorn
 import pymongo
 from fastapi.middleware.cors import CORSMiddleware
 
-uri = "mongodb+srv://kituuu:YHkBEK8DtlfiXFjE@omegacluster.rtzywxy.mongodb.net/"
+uri = ""
 client = pymongo.MongoClient(uri)
 
 from pathway.xpacks.llm.vector_store import VectorStoreClient
@@ -176,7 +176,7 @@ async def ingest(
         with open(file_location, "wb") as f:
             f.write(await file.read())
 
-    # asyncio.create_task(generate_agreement(company1, company2, id))
+    asyncio.create_task(generate_agreement(company1, company2, id))
 
     # Return a response with the generated conversation ID
     return {
@@ -228,12 +228,12 @@ async def generate_insights(summaries, company1, company2):
 async def send_documents(output_to_document, insights, conversation_id):
     # store the documents in the database using the mongo client and conversation_id
     global check_event
-    db = client["MA"]
+    db = client["conversationdb"]
     collection = db["documents"]
     output_to_document["insights"] = insights
     output_to_document["conversation_id"] = conversation_id
 
-    await collection.insert_one(output_to_document)
+    collection.insert_one(output_to_document)
     check_event.set()
     return
 
