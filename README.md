@@ -124,11 +124,21 @@ docker run --name <container> <image>
 ```
 
 ## Approach
+
+### Pipeline
 - The query is processed by AdaRAG and either sent to general, financial or legal query agent.
 - In financial or legal query agent, query is answered on basis of context, unless RAG fails, where it currently answers using its general knowledge.
 - For RAG, we pass through HyDe agent for a supposed answer for broader context search from VectorStore.
 - We rerank the documents and return the retrieve documents.
 - Retrieved documents are passed to LLM for answer generation.
+
+### Merger and Acquisition Agent
+
+### CA Agent
+
+### Macros Agent
+
+### Flags Agent
 
 ## Guardrail
 
