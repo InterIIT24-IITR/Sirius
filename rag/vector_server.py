@@ -21,7 +21,7 @@ PATHWAY_PORT = 8000
 PATHWAY_HOST = "127.0.0.1"
 
 text_splitter = TokenCountSplitter(min_tokens=1000, max_tokens=1500)
-embedder = SentenceTransformerEmbedder(model="paraphrase-MiniLM-L6-v2")
+embedder = SentenceTransformerEmbedder(model="Snowflake/snowflake-arctic-embed-l")
 parser = ParseUnstructured()
 
 vector_server = VectorStoreServer(
