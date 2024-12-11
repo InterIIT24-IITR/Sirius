@@ -9,6 +9,7 @@ from mongo.general.schema import PyMongoConversation
 from agent import run_pipeline
 from common.evaluator import EnhancedRAGPipeline
 
+
 load_dotenv()
 
 try:
@@ -19,6 +20,13 @@ except Exception as e:
     print("Failed to connect to MongoDB:", e)
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 async def handle_conversation(websocket: WebSocket, request: QueryRequest):
@@ -69,7 +77,7 @@ async def handle_conversation(websocket: WebSocket, request: QueryRequest):
 
             await websocket.send_json(
                 {
-                    "type": "conversation",
+                    "type": "request",
                     "conversation": {
                         "id": request.id,
                         "title": user_conversation["title"],

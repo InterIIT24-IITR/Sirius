@@ -5,6 +5,7 @@ from rag.client import retrieve_documents
 from common.plan_rag import plan_rag_query
 from common.metrag import metrag_filter
 
+
 def single_retriever_macro_agent(query):
     """For simple queries, run them through HyDe and then retrieve the documents"""
 
@@ -21,10 +22,11 @@ def single_retriever_macro_agent(query):
                 You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
             """
     response = call_llm(prompt)
-    #TODO
+    # TODO
     documents = metrag_filter(documents, query, "macro")
 
     return documents, response
+
 
 def multi_retrieval_macro_agent(query):
     """Answer complex queries by running them through a multi-retrieval process based on PlanRAG"""
@@ -50,11 +52,10 @@ def multi_retrieval_macro_agent(query):
                     print(f"{key}: {value}")
             documents.extend(docs)
             response.append(resp)
-  
+
     # modified_query = hyde_query(query) # For the complex query, do we need HyDE?
 
-
-    result = rerank_docs(query, documents) 
+    result = rerank_docs(query, documents)
 
     documents = [doc.document.text for doc in result.results]
     context_response = "\n\n".join(response)
@@ -69,7 +70,5 @@ def multi_retrieval_macro_agent(query):
             Do not use outside knowledge to answer the query. If there is missing context, don't try to make up facts and figures.
             You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
             """
-
-    print("Prompt:\n", prompt)
     response = call_llm(prompt)
     return response

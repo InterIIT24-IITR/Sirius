@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket,Form
+from fastapi import FastAPI, WebSocket, Form
 import uvicorn
 import pymongo
 import uuid
@@ -16,6 +16,8 @@ client = pymongo.MongoClient(uri)
 db = client["macro"]
 db = db["results"]
 app = FastAPI()
+
+
 def single_retriever_macro_agent(query):
     """For simple queries, run them through HyDe and then retrieve the documents"""
 
@@ -35,7 +37,8 @@ def single_retriever_macro_agent(query):
 
     return documents, response
 
-async def multi_retrieval_macro_agent(query,id):
+
+async def multi_retrieval_macro_agent(query, id):
     """Answer complex queries by running them through a multi-retrieval process based on PlanRAG"""
     global check_event
     plan = plan_rag_query(query, "macro")
@@ -55,17 +58,12 @@ async def multi_retrieval_macro_agent(query,id):
             print(f"Step:\n{step}")
             print(f"Query:\n{query}")
             docs, resp = single_retriever_macro_agent(query)
-            for i, doc in enumerate(docs):
-                print(f"\nDocument {i}:")
-                for key, value in doc.items():
-                    print(f"{key}: {value}")
             documents.extend(docs)
             response.append(resp)
-  
+
     # modified_query = hyde_query(query) # For the complex query, do we need HyDE?
 
-
-    result = rerank_docs(query, documents) 
+    result = rerank_docs(query, documents)
 
     documents = [doc.document.text for doc in result.results]
     context_response = "\n\n".join(response)
@@ -81,29 +79,31 @@ async def multi_retrieval_macro_agent(query,id):
             You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
             """
 
-    print("Prompt:\n", prompt)
     llm = ChatOpenAI(model="gpt-4o-mini")
     response = llm.invoke(prompt).content
-    db.update_one({"id" : id}, {"$set" : response},upsert=True)
-    print("Done")
+    db.update_one({"id": id}, {"$set": response}, upsert=True)
     check_event.set()
+
+
 @app.post("/submit")
-async def submit(query : str = Form(...)):
+async def submit(query: str = Form(...)):
     id = str(uuid.uuid4())
-    asyncio.create_task(multi_retrieval_macro_agent(query,id))
+    asyncio.create_task(multi_retrieval_macro_agent(query, id))
     return {
         "message": "Files uploaded successfully, agreement generation in progress.",
         "conversation_id": id,
     }
+
 
 @app.websocket("/ws/check")
 async def check(ws: WebSocket):
     await ws.accept()
     global check_event
     while True:
-        await check_event.wait()  
-        await ws.send_json({"result": "OK"})  
+        await check_event.wait()
+        await ws.send_json({"result": "OK"})
         check_event.clear()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8230)

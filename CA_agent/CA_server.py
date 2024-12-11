@@ -1,6 +1,6 @@
 import sys, logging
 import pathway as pw
-from pathway.xpacks.llm.embedders import OpenAIEmbedder, SentenceTransformerEmbedder
+from pathway.xpacks.llm.embedders import SentenceTransformerEmbedder
 from pathway.xpacks.llm.splitters import TokenCountSplitter
 from pathway.xpacks.llm.vector_store import VectorStoreServer
 from pathway.xpacks.llm.parsers import ParseUnstructured
@@ -17,7 +17,7 @@ data_sources.append(
     )
 )
 
-PATHWAY_PORT = 8100
+PATHWAY_PORT = 8225
 PATHWAY_HOST = "127.0.0.1"
 
 text_splitter = TokenCountSplitter(min_tokens=500, max_tokens=1000)

@@ -19,7 +19,6 @@ class LLMEvaluatorAgent:
         self,
         criteria: EvaluationCriteria = EvaluationCriteria()
     ):
-        self.criteria = criteria
 
     def create_evaluation_prompt(
         self, 
@@ -132,3 +131,4 @@ class EnhancedRAGPipeline:
             "attempts": attempts,
             "warning": "Max retries reached without meeting quality thresholds"
         }
+

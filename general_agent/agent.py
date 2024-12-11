@@ -3,6 +3,7 @@ from general_agent.zero_retrieval import zero_retrieval_agent
 from general_agent.single_retrieval import single_retrieval_agent
 from general_agent.multi_retrieval import multi_retrieval_agent
 
+
 def transfer_to_general_agent() -> Agent:
     """Transfer queries to expert agent"""
     return Agent(

@@ -4,6 +4,7 @@ from common.reranker import rerank_docs
 from common.metrag import metrag_filter
 from common.llm import call_llm
 
+
 def zero_retrieval_agent(query):
     """Answer extremely simple queries without any RAG-retrieval"""
 

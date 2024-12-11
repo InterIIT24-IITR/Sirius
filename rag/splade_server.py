@@ -1,5 +1,4 @@
 import logging
-from pathway.xpacks.llm.embedders import SentenceTransformerEmbedder
 from pathway.xpacks.llm.splitters import TokenCountSplitter
 from pathway.xpacks.llm.vector_store import VectorStoreServer
 from pathway.xpacks.llm.parsers import ParseUnstructured
@@ -14,6 +13,14 @@ data_sources = []
 data_sources.append(
     pw.io.fs.read(
         "./documents",
+        format="binary",
+        mode="streaming",
+        with_metadata=True,
+    )
+)
+data_sources.append(
+    pw.io.fs.read(
+        "../MA_agent/MA",
         format="binary",
         mode="streaming",
         with_metadata=True,

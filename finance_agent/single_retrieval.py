@@ -5,6 +5,7 @@ from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from common.llm import call_llm
 
+
 def single_retrieval_finance_agent(query):
     """Answer simple finance related queries by running them through HyDe and then retrieve the documents"""
 
@@ -24,6 +25,6 @@ def single_retrieval_finance_agent(query):
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
             You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
-
+    
     response = call_llm(prompt)  
     return response,context

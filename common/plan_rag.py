@@ -70,10 +70,12 @@ def plan_rag_query(query, agent="finance", **kwargs):
         You need to search for the information related to the sections on section {', '.join(section)} in the documents inputted by the user.
         The relevant documents input by the user are described as:
         {userinfo_str}
-        Ensure your step has 2-3 plans. Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
+        Ensure your plan has only 2-3 steps. Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         An example plan would be that the first step is to retrieve the user's relevant documents and the second step is to retrieve the relevant information from the income tax laws.
+        Ensure each step of the plan is a separate line in the message and that can also be used a query for retrieval by another RAG agent.
         """
         plan_query = call_llm(prompt)
+        debug_print(True, f"Plan query: {plan_query}")
         return plan_query
     expertise = " "
     if agent == "finance":

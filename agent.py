@@ -13,6 +13,7 @@ logging.basicConfig(
 )
 client = Swarm()
 
+
 def run_pipeline(query):
     messages = [
         {
@@ -23,7 +24,6 @@ def run_pipeline(query):
 
     safe, unsafe_category = guardrail(messages)
     if not safe:
-        print(unsafe_category)
         return "Sorry we can't answer the request"
 
     response = client.run(agent=adarag_agent(), messages=messages, debug=True)
@@ -42,6 +42,7 @@ def run_pipeline(query):
         print(unsafe_category)
         return "Sorry we can't answer the request" 
     return answer,context
+
 
 
 if __name__ == "__main__":

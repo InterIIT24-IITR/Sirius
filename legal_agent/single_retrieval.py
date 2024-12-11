@@ -5,6 +5,7 @@ from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from common.llm import call_llm
 
+
 def single_retrieval_legal_agent(query):
     """Answer simple legal related queries by running them through HyDe and then retrieve the documents"""
 
@@ -26,5 +27,4 @@ def single_retrieval_legal_agent(query):
             """
 
     response = call_llm(prompt)
-
     return response,context
