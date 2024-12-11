@@ -1,12 +1,12 @@
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import numpy as np
 from swarm.util import debug_print
+from concurrent.futures import ThreadPoolExecutor
 
 
-def metrag_score(document, query, agent):
+def metrag_score(document, query, agent, doc_):
     debug_print(True, f"Processing tool call: {metrag_score.__name__}")
-    llm_utility = ChatOpenAI(model="gpt-4o-mini")
     good_utility = "The document is absolutely outstanding and exceeds expectations in addressing the query. It is exceptionally relevant, brilliantly complete, impeccably accurate, and presented with crystal-clear clarity. Its consistency is flawless, making it an invaluable and extraordinary resource of immense utility!"
     bad_utility = "The document is utterly disappointing and fails to meet even basic expectations in addressing the query. It lacks relevance, is incomplete, riddled with inaccuracies, and confusingly presented. Its inconsistency undermines any potential value, making it a frustrating and entirely unhelpful resource."
     prompt = f"""
@@ -37,6 +37,14 @@ def metrag_score(document, query, agent):
         """
         prompt = prompt + added_info 
     
+    if agent == "legal":
+        added_info = """
+        You must keep in mind that you are a legal expert and that the response you generate should be tailored accordingly.
+        For instance, for relevancy you also need to consider whether the document contains the relevant terms and whether it is focused on the terminologies and case information which are contained in the query.
+        If there is no reference to the either of the terminologies or case information in the document, it is not relevant. In such cases, output the same response as that for a low utility document.
+        """
+        prompt = prompt + added_info 
+
     if agent == "macro":
         added_info = """
         You must keep in mind that you are an expert in market analysis, and that the response you generate should be tailored accordingly.
@@ -44,14 +52,36 @@ def metrag_score(document, query, agent):
         If there is no reference to the companies or the product field specified in the query within the document, it is not relevant. In such cases, output the same response as that for a low utility document.
         Additionally, ensure that the insights you provide are actionable and reflect current market trends, opportunities, and competitive dynamics.
         """
-        prompt = prompt + added_info   
+        prompt = prompt + added_info
+    
+    if agent == "M&A":
+        added_info = """
+        You must keep in mind that you are an expert in mergers and acquisitions, and that the response you generate should be tailored accordingly.
+        For instance, for relevancy, you need to consider whether the document contains relevant information about the companies involved in the merger and acquisition agreement.
+        If there is no reference to the companies or the agreement details in the document, it is not relevant. In such cases, output the same response as that for a low utility document.
+        Additionally, ensure that the information retrieved from each document is accurate and can be used to draft the final agreement effectively.
+        """
+        prompt = prompt + added_info
+    
+    if agent == "CA":
+        added_info = """
+        You must keep in mind that you are an expert in customer assistance, and that the response you generate should be tailored accordingly.
+        For instance, for relevancy, you need to consider whether the document contains relevant information about the user and/or the query and its relevant income tax deductions, and related sections
+        If there is no reference to any such information in the document, it is not relevant. In such cases, output the same response as that for a low utility document.
+        Additionally, ensure that the document provides clear and accurate information that can assist in answering the query effectively.
+        """
+        prompt = prompt + added_info
         
-    response = llm_utility.invoke(prompt).content
-    return SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
+    response = call_llm(prompt)
+    return doc_, SentimentIntensityAnalyzer().polarity_scores(response).get("compound")
 
 
 def metrag_filter(documents, query, agent):
     debug_print(True, f"Processing tool call: {metrag_filter.__name__}")
-    score_dict = [(doc, metrag_score(doc, query, agent)) for doc in documents]
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(lambda doc: metrag_score(doc["text"], query, agent, doc), documents)
+    score_dict = [result for result in results]
+    if len(score_dict) == 0:
+        return []
     metrag_threshold = np.percentile(list([b for (a, b) in score_dict]), 25)
     return [doc for (doc, score) in score_dict if score > metrag_threshold]

@@ -1,5 +1,5 @@
 from common.reranker import rerank_docs
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from common.hyde import hyde_query
 from rag.client import retrieve_documents
 from common.plan_rag import plan_rag_query
@@ -7,6 +7,7 @@ from common.plan_rag import single_plan_rag_step_query
 from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 def single_retriever_agent(query):
     """For simple queries, run them through HyDe and then retrieve the documents"""
@@ -21,11 +22,11 @@ def single_retriever_agent(query):
     context = "\n\n".join(documentlist)
 
     prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'."""
-    
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
+
+    response = call_llm(prompt)
 
     return documents, response
+
 
 def step_executor(step):
     query_ = single_plan_rag_step_query(step)
@@ -35,16 +36,18 @@ def step_executor(step):
 
 def multi_retrieval_agent(query):
     """Answer complex queries by running them through a multi-retrieval process based on PlanRAG"""
-    
+
     plan = plan_rag_query(query, "general")
     dict_store = {}
     resp_dict = {}
     documents = []
     response = []
-    
+
     with ThreadPoolExecutor() as executor:
         futures = {
-            executor.submit(step_executor, step): i for i, step in enumerate(plan.split("\n")) if step
+            executor.submit(step_executor, step): i
+            for i, step in enumerate(plan.split("\n"))
+            if step
         }
         for future in as_completed(futures):
             i = futures[future]
@@ -54,11 +57,11 @@ def multi_retrieval_agent(query):
     for i in sorted(dict_store.keys()):
         documents.extend(dict_store[i])
         response.extend(resp_dict[i])
-    
+
     modified_query = hyde_query(query)
     documents = metrag_filter(documents, query, "general")
     documents = corrective_rag(query, documents)
-    result = rerank_docs(modified_query, documents) 
+    result = rerank_docs(modified_query, documents)
 
     documents = [doc.document.text for doc in result.results]
 
@@ -74,10 +77,9 @@ def multi_retrieval_agent(query):
             {context_response}
             Supplementary information to the responses is as follows:
             {context_documents}
-            Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
+            Do not use outside knowledge to answer the query. If there is missing context, don't try to make up facts and figures.
             """
-    
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt).content
-    
+
+    response = call_llm(prompt)
+
     return response

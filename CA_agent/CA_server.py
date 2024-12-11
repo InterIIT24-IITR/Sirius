@@ -1,6 +1,6 @@
 import sys, logging
 import pathway as pw
-from pathway.xpacks.llm.embedders import OpenAIEmbedder, SentenceTransformerEmbedder
+from pathway.xpacks.llm.embedders import SentenceTransformerEmbedder
 from pathway.xpacks.llm.splitters import TokenCountSplitter
 from pathway.xpacks.llm.vector_store import VectorStoreServer
 from pathway.xpacks.llm.parsers import ParseUnstructured
@@ -10,14 +10,14 @@ logging.basicConfig(stream=sys.stderr, level=logging.WARN, force=True)
 data_sources = []
 data_sources.append(
     pw.io.fs.read(
-        "./IncomeTaxDocuments",
+        "./CA_agent/IncomeTaxDocuments",
         format="binary",
         mode="streaming",
         with_metadata=True,
     )
 )
 
-PATHWAY_PORT = 8100
+PATHWAY_PORT = 8225
 PATHWAY_HOST = "127.0.0.1"
 
 text_splitter = TokenCountSplitter(min_tokens=500, max_tokens=1000)

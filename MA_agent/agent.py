@@ -1,33 +1,34 @@
+import json
 import os
 import uuid
-import pathway as pw
 from fastapi import FastAPI, File, Form, UploadFile, WebSocket
-from pathlib import Path
-import time
 import asyncio
 from typing import List
 from common.plan_rag import plan_rag_query, single_plan_rag_step_query
+from rag.client import retrieve_documents
+from swarm.util import debug_print
+from rag.rrf import rerank_results
 
-# from rag.client import retrieve_documents
+
 from MA_agent.constants import (
     LIST_OF_DOCUMENTS_INPUT,
     LIST_OF_DOCUMENTS_OUTPUT,
     DOCUMENT_PROMPT_MAPPING,
 )
-from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 import MA_agent.prompts as prompts
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 import uvicorn
 import pymongo
 from fastapi.middleware.cors import CORSMiddleware
 
-uri = ""
+# Localhost
+uri = "mongodb://127.0.0.1:27017/"
 client = pymongo.MongoClient(uri)
 
 from pathway.xpacks.llm.vector_store import VectorStoreClient
 
-VECTOR_PORT = 8765
+VECTOR_PORT = 8000
 PATHWAY_HOST = "127.0.0.1"
 
 vector_client = VectorStoreClient(
@@ -35,18 +36,17 @@ vector_client = VectorStoreClient(
     port=VECTOR_PORT,
 )
 
+def retrieve_docs(query: str):
+    query_prefix = 'Represent this sentence for searching relevant passages: '
+    vector_results = vector_client.query(query_prefix + query, 10)
+    results = []
+    results.append(vector_results)
+    return rerank_results(results)
+
 check_event = asyncio.Event()
 
-
-async def retrieve_documents(query: str):
-    # print(query)
-    results = vector_client.query(query, 10)
-    print("DONE")
-    return results
-
-
-llm = ChatOpenAI(model="gpt-4o-mini")
-import json
+async def retrieve_and_process(query):
+    return retrieve_docs(query)
 
 app = FastAPI()
 app.add_middleware(
@@ -83,6 +83,7 @@ def plan_to_queries(plan):
     queries = []
     for step in plan.split("\n"):
         if len(step) > 0:
+            debug_print(True, f"Step: {step}")
             query = single_plan_rag_step_query(step)
             queries.append(query)
     return queries
@@ -105,10 +106,12 @@ async def generate_agreement(company1, company2, id):
     if os.path.exists(cache_file):
         with open(cache_file, "r") as f:
             all_docs_queries = json.load(f)
+            debug_print(True, "Loaded queries from cache")
     else:
         all_docs_queries: list[list[str]] = await asyncio.gather(*tasks)
         with open(cache_file, "w") as f:
             json.dump(all_docs_queries, f)
+            debug_print(True, "Dumped queries to cache")
 
     #    tasks = [create_queries(output_doc) for output_doc in LIST_OF_DOCUMENTS_OUTPUT]
 
@@ -117,11 +120,12 @@ async def generate_agreement(company1, company2, id):
     #
     # Flatten the nested list of queries
     all_queries = list(chain.from_iterable(all_docs_queries))
-
-    # Use asyncio.gather to await all `retrieve_documents` calls
+    debug_print(True, "All queries")
+    # Use asyncio.gather to await all `retrieve_docs` calls
     all_results = await asyncio.gather(
-        *(retrieve_documents(query) for query in all_queries)
+        *(retrieve_and_process(query) for query in all_queries)
     )
+    debug_print(True, "All results")
 
     start_idx = 0
     final_results: list[list[any]] = []
@@ -130,18 +134,18 @@ async def generate_agreement(company1, company2, id):
         documents = all_results[start_idx : start_idx + count]
         final_results.append(list(chain.from_iterable(documents)))
         start_idx += count
-
+    debug_print(True, "Final results")
     async def create_summaries(documents, doc_type, company_name):
         summary = await generate_summary(documents, doc_type, company_name)
         return summary
-
+    debug_print(True, "Summaries")
     tasks = []
     for idx, output_doc in enumerate(LIST_OF_DOCUMENTS_OUTPUT):
         for company in enumerate([company1, company2]):
             tasks.append(create_summaries(final_results[idx], output_doc, company))
-
+    debug_print(True, "Tasks")
     summaries: list[str] = await asyncio.gather(*tasks)
-
+    debug_print(True, "Summaries 2")
     # Generate the final documents based on the summaries parallely
     tasks = []
     for idx in range(0, len(summaries), 2):
@@ -151,13 +155,15 @@ async def generate_agreement(company1, company2, id):
                 output_doc, company1, company2, summaries[idx], summaries[idx + 1]
             )
         )
-
+    debug_print(True, "Tasks 2")
     documents: list[str] = await asyncio.gather(*tasks)
     output_to_document: dict[str, str] = {
         output_doc: document
         for output_doc, document in zip(LIST_OF_DOCUMENTS_OUTPUT, documents)
     }
+    debug_print(True, "Final")
     insights = await generate_insights(summaries, company1, company2)
+
     await send_documents(output_to_document, insights, id)
 
 
@@ -195,7 +201,7 @@ async def generate_document(
         company_b_details=company2_details,
         document_outline=DOCUMENT_OUTLINE_MAPPING[type],
     )
-    document = llm.invoke(prompt).content
+    document = call_llm(prompt)
     return document
 
 
@@ -206,7 +212,7 @@ async def generate_summary(documents, doc_type, company_name):
         document_type=doc_type,
         context=" ".join(doc["text"] for doc in documents),
     )
-    summary = llm.invoke(prompt).content
+    summary = call_llm(prompt)
     return summary
 
 
@@ -220,8 +226,12 @@ async def generate_insights(summaries, company1, company2):
         a_summary=company1_summary,
         b_summary=company2_summary,
     )
-    insights = llm.invoke(prompt).content
+    debug_print(True, "before llm")
+    insights = call_llm(prompt)
+    debug_print(True, "after llm")
+    debug_print(True, insights)
     insights = json.loads(insights)
+
     return insights
 
 

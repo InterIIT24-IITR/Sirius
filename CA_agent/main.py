@@ -1,24 +1,52 @@
-import os, uuid, time
-from langchain_openai import ChatOpenAI
+import os, uuid
+from common.llm import call_llm
 from pathway.xpacks.llm.parsers import ParseUnstructured
-from pathway.xpacks.llm.vector_store import VectorStoreClient
-from common.plan_rag import plan_rag_query, single_plan_rag_step_query
 from CA_agent.multi_retrieval import multi_retrieval_CA_agent
+import asyncio
+from fastapi import FastAPI, File, UploadFile, Form, WebSocket
+import pymongo
+import shutil
+import uvicorn
+import PyPDF2
+import json
+import re
+import asyncio
+from swarm.util import debug_print
 
-def parse_document(docpath):
-    with open(docpath) as f:
-        paraphrase = f.read()
-        parser = ParseUnstructured(mode='single')
-        parsed = parser.__call__(paraphrase)
-        parsed_ = parser.__call__(paraphrase)
-        parsed_ = str(parsed_)
+check_event = asyncio.Event()
+RELEVANT_SECTIONS = [
+    ["80C", "80CC", "80CCA", "80CCB", "80CCC", "80CCD", "80CCE"],
+    ["80CCF", "80CCG", "80CCH"],
+    ["80D", "80DD", "80DDB"],
+    ["80E", "80EE", "80EEA", "80EEB"],
+    ["80G", "80GG", "80GGA", "80GGB", "80GGC"],
+]
+
+SAVE_DIR = "./uploadeddocs"
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+uri = "mongodb://localhost:27017/"
+client = pymongo.MongoClient(uri)
+db = client["CA_agent"]
+db = db["results"]
+app = FastAPI()
+
+async def parse_pdf(docpath):
+    with open(docpath, "rb") as f:
+        pdf_reader = PyPDF2.PdfReader(f)
+        full_text = ""
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            full_text += page.extract_text()  # Extract text from each page
+        parser = ParseUnstructured(mode="single")
+        parsed = parser.__call__(full_text)
+        parsed_ = str(parsed)
         parsed_ = parsed_[28:-2]
         return parsed_
 
-def add_user_document(documentpath):
-    # Apart from this make sure the document is added to the vector store
-    parsed_doc = parse_document(documentpath)
-    llm = ChatOpenAI(model="gpt-4o-mini")
+
+async def add_user_document(documentpath):
+    parsed_doc = await parse_pdf(documentpath)
     prompt = f"""
     You are a helpful AI agent.
     You are a knowledgeable agent aware of the field of chartered accountancy and finance. Particularly, you are
@@ -28,31 +56,30 @@ def add_user_document(documentpath):
     Your job is to parse the document and extract the relevant information from it, such as the income, expenses, and any other relevant information.
     You should return the extracted information in a structured format that is easy to understand and is descriptive of the document's content.
     """
-    summarised_doc = llm.invoke(prompt).content
+    summarised_doc = call_llm(prompt)
     prompt = f"""
     You are a helpful AI agent.
     Return a small one-line descriptor of the content of this document: '{parsed_doc}'.
     You have generated a summary of the document: '{summarised_doc}'
     Now you need to return a one-line descriptor for the same document.sum
     """
-    point_doc = llm.invoke(prompt).content
+    point_doc = call_llm(prompt)
     return summarised_doc, point_doc
 
-def add_to_info(documentpath, info_dict):
-    summ_doc, point_doc = add_user_document(documentpath)
+
+async def add_to_info(documentpath, info_dict):
+    summ_doc, point_doc = await add_user_document(documentpath)
     info_dict[point_doc] = summ_doc
     return info_dict
 
-RELEVANT_SECTIONS = [["80C", "80CC", "80CCA", "80CCB", "80CCC", "80CCD", "80CCE"], ["80CCF", "80CCG", "80CCH"], ["80D", "80DD", "80DDB"], ["80E", "80EE", "80EEA", "80EEB"], ["80G", "80GG", "80GGA", "80GGB", "80GGC"]]
 
-def single_section_handler(info_dict, section):
+async def single_section_handler(info_dict, section):
     temp = "\n\n".join(info_dict.keys())
     query = f"""
     Identify and classify the sections of the income tax act that are applicable for tax deduction in context of a user who has given you documents related to the same.
     The sections that are relevant are: {", ".join(section)}
     The documents that are input by the user are as follows:{temp}
     """
-    llm = ChatOpenAI(model="gpt-4o-mini")
     response = multi_retrieval_CA_agent(query, section, info_dict)
     prompt_new = f"""
     {query}
@@ -67,16 +94,17 @@ def single_section_handler(info_dict, section):
     }}
     Also include a summary for each section as to why it may or may not be applicale to the user in a single line or two as a second JSON along with minimal calculations if possible. This information should be relevant to the user and not generic.
     """
-    response = llm.invoke(prompt_new).content
+    response = call_llm(prompt_new)
     return response
 
-def overall_handler(info_dict):
+
+async def overall_handler(info_dict):
     responses = []
     for section in RELEVANT_SECTIONS:
-        response = single_section_handler(info_dict, section)
-        print(response)
+        response = await single_section_handler(info_dict, section)
         responses.append(response)
     temp = "\n\n".join(responses)
+    debug_print(True, "Final response consolidation")
     prompt_new = f"""
     You are a helpful AI agent.
     You were tasked with identifying which sections of the income tax act are applicable for tax deduction in context of a user who has given you documents related to the same.
@@ -92,20 +120,49 @@ def overall_handler(info_dict):
         "probable_sections": ["80D", "80DD"]
     }}
     Also include a summary for each section as to why it may or may not be applicale to the user in a single line or two as a second JSON along with minimal calculations if possible. This information should be relevant to the user and not generic.
+    Do not include any additional text apart from the JSON output.
     """
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    response = llm.invoke(prompt_new).content
+    response = call_llm(prompt_new)
+    debug_print(True, "generated response")
+    debug_print(True, response)
     return response
 
-def user_input_descript(input, info_dict):
-    info_dict["The user's description of their tax situation"] = input
-    return info_dict
 
-### For the developers
-# Doc input hoga, usko vectorstore mein daalna. Thereafter uska summary and point descriptor nikalne
-#    ke liye I need to have a docpath and info_dict to call the add_to_info function
-# Maintain an info_dict for the user, which is initially empty, and is only updated by the add_to_info
-#    function and the user_input_descript function
-# Uske baad simply call the overall_handler with the finalised info_dict and it will return the required
-#    response (ideally JSON should be correct)
-# Based on the response, display on the user interface
+async def evaluate(file_path, query, id):
+    global check_event
+    info_dict = {}
+    info_dict = await add_to_info(file_path, info_dict)
+    info_dict["The user's description of their tax situation"] = query
+    response = await overall_handler(info_dict)
+    debug_print(True, response)
+    response = json.loads(response[7:-3])
+    db.update_one({"id": id}, {"$set": response}, upsert=True)
+    check_event.set()
+
+
+@app.post("/submit")
+async def upload_file(file: UploadFile = File(...), query: str = Form(...)):
+    file_path = os.path.join(SAVE_DIR, file.filename)
+    id = str(uuid.uuid4())
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    asyncio.create_task(evaluate(file_path, query, id))
+
+    return {
+        "message": "Files uploaded successfully, generation in progress.",
+        "conversation_id": id,
+    }
+
+
+@app.websocket("/ws/check")
+async def check(ws: WebSocket):
+    await ws.accept()
+    global check_event
+    while True:
+        await check_event.wait()
+        await ws.send_json({"result": "OK"})
+        check_event.clear()
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8230)

@@ -1,12 +1,11 @@
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 from swarm.util import debug_print
 
 def plan_rag_query(query, agent="finance", **kwargs):
     debug_print(True, f"Processing tool call: {plan_rag_query.__name__}")
-    llm = ChatOpenAI(model="gpt-4o-mini")
     
     if agent=="macro":
-        plan_query = llm.invoke(
+        plan_query = call_llm(
             f"""
             You are a helpful AI agent.
             You are tasked with writing a detailed step-by-step plan to answer the complex query given to you, which is: '{query}'.
@@ -26,7 +25,7 @@ def plan_rag_query(query, agent="finance", **kwargs):
             4. Investigate current market trends related to the product field, focusing on consumer preferences, technological advancements, and regulatory influences.
             5. Identify potential opportunities for growth and innovation within the product field, considering emerging markets and shifts in consumer behavior.
             """
-        ).content
+        )
         return plan_query
 
     if agent == "M&A":
@@ -53,7 +52,7 @@ def plan_rag_query(query, agent="finance", **kwargs):
         Output a plan with a minimal number of steps, preferrably 3-4.
         Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         """
-        plan_query = llm.invoke(prompt).content
+        plan_query = call_llm(prompt)
         return plan_query
     
     if agent == "CA":
@@ -71,11 +70,20 @@ def plan_rag_query(query, agent="finance", **kwargs):
         You need to search for the information related to the sections on section {', '.join(section)} in the documents inputted by the user.
         The relevant documents input by the user are described as:
         {userinfo_str}
-        Ensure your step has 2-3 plans. Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
+        Ensure your plan has only 2-3 steps. Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         An example plan would be that the first step is to retrieve the user's relevant documents and the second step is to retrieve the relevant information from the income tax laws.
-        """ 
-
-    plan_query = llm.invoke(
+        Ensure each step of the plan is a separate line in the message and that can also be used a query for retrieval by another RAG agent.
+        """
+        plan_query = call_llm(prompt)
+        debug_print(True, f"Plan query: {plan_query}")
+        return plan_query
+    expertise = " "
+    if agent == "finance":
+        expertise = "You are an expert in the field of finance. Your answer should be tailored accordingly."
+    elif agent == "legal":
+        expertise = "You are a legal expert. Your answer should be tailored accordingly."
+    
+    plan_query = call_llm(
         f"""
         You are a helpful AI agent.
         You are tasked with writing a detailed step-by-step plan to answer the complex query given to you, which is: '{query}'.
@@ -85,22 +93,22 @@ def plan_rag_query(query, agent="finance", **kwargs):
         The steps you generate need to be clear, and should be written in a way that they can be input to another RAG model as queries for retrieval and step-by-step processing.
         Ensure each step of the plan is a separate line in the message and that can also be used a query for retrieval by another RAG agent.
         Put primary focus on the quality of the query for the RAG agent.
+        {expertise}
         Do NOT output a plan with more than 3 steps and try to minimise the number of steps to as low as possible, preferrably 2 or 3.
         Do NOT include a final step to synthesize the information, only steps for retrieval as that will be done separately.
         """
-    ).content
+    )
 
     return plan_query
 
 
 def single_plan_rag_step_query(step):
     debug_print(True, f"Processing tool call: {single_plan_rag_step_query.__name__}")
-    query_llm = ChatOpenAI(model="gpt-4o-mini")
     query_prompt = f"""You are a helpful prompt engineering assistant that must generate a query to feed to an LLM based on the given step in a multi-step plan.
         The step you must generate a query for is: {step}
         The query you generate should be clear and concise, and should be designed to retrieve the most relevant documents and information for the given step.
         It should be a query and not a statement, and must be no longer than 2 sentences.
         You must keep in mind that you are an expert in the field of finance and legalities, and that the query you generate should be tailored accordingly.
         """
-    query_ = query_llm.invoke(query_prompt).content
+    query_ = call_llm(query_prompt)
     return query_

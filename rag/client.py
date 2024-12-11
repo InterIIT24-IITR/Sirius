@@ -6,7 +6,7 @@ import base64
 
 VECTOR_PORT = 8000
 BM25_PORT = 7000
-SPLADE_PORT = 9000
+SPLADE_PORT = 8500
 PATHWAY_HOST = "127.0.0.1"
 
 vector_client = VectorStoreClient(
@@ -74,8 +74,9 @@ def graph_lookup(docs,n=3):
     return list(chunks)
 
 def retrieve_documents(query: str):
+    query_prefix = 'Represent this sentence for searching relevant passages: '
     with ThreadPoolExecutor() as executor:
-        vector_future = executor.submit(vector_client.query, query, 10)
+        vector_future = executor.submit(vector_client.query, query_prefix + query, 10)
         bm25_future = executor.submit(bm25_client.query, query, 10)
         splade_future = executor.submit(splade_client.query, query, 10)
 

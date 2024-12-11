@@ -1,5 +1,4 @@
 import logging
-from pathway.xpacks.llm.embedders import SentenceTransformerEmbedder
 from pathway.xpacks.llm.splitters import TokenCountSplitter
 from pathway.xpacks.llm.vector_store import VectorStoreServer
 from pathway.xpacks.llm.parsers import ParseUnstructured
@@ -19,8 +18,16 @@ data_sources.append(
         with_metadata=True,
     )
 )
+data_sources.append(
+    pw.io.fs.read(
+        "../MA_agent/MA",
+        format="binary",
+        mode="streaming",
+        with_metadata=True,
+    )
+)
 
-PATHWAY_PORT = 9000
+PATHWAY_PORT = 8500
 PATHWAY_HOST = "127.0.0.1"
 
 text_splitter = TokenCountSplitter(min_tokens=1000, max_tokens=1500)

@@ -1,11 +1,11 @@
 import os
-from langchain_openai import ChatOpenAI
+from common.llm import call_llm
 import PyPDF2
 import tiktoken
 from pydantic import BaseModel
 from typing import Optional
 import json
-from contracts import contract_checklist
+from flags_agent.contracts import contract_checklist
 import uvicorn
 import pymongo
 from fastapi import FastAPI, File, UploadFile, WebSocket
@@ -43,17 +43,28 @@ class Evals(BaseModel):
     checklist_relevance: float
 
 
-async def convert_to_mongo_format(data):
-    """
-    Converts the input data into a MongoDB-friendly format.
-    """
-    # Iterate over each category in the data
-    converted_data = {}
-    for category, category_data in data.items():
-        category_entry = category_data.dict()
-        converted_data[category] = category_entry
+def transform_to_prisma_schema(id, evals):
 
-    return converted_data
+    for category, evals in evals.items():
+        result = {
+            "group _id": id,
+            "category": category,
+            "checklistRelevance": evals.checklist_relevance,
+            "evaluations": [],
+        }
+
+        # Create the Evaluation entries
+        for eval_item in evals.evals:
+            evaluation = {
+                "id": str(uuid.uuid4()),
+                "resultId": id,
+                "item": eval_item.item,
+                "isMet": eval_item.is_met,
+                "explanation": eval_item.explanation,
+                "reference": eval_item.reference,
+            }
+            result["evaluations"].append(evaluation)
+        db.update_one({"id": id}, {"$set": result}, upsert=True)
 
 
 async def extract_pdf_text(content: bytes) -> str:
@@ -67,16 +78,8 @@ async def extract_pdf_text(content: bytes) -> str:
         return f"Error reading PDF: {str(e)}"
 
 
-# def count_tokens(text):
-#     encoding = tiktoken.encoding_for_model("gpt-4o-mini")
-#     return len(encoding.encode(text))
-
-
-async def evaluate(id: str, content) -> Evals:
-
-    text = await extract_pdf_text(content)
+async def evaluate(text: str, id: str) -> Evals:
     global check_event
-    llm = ChatOpenAI(model="gpt-4o-mini")
     lines = text.splitlines()
     numbered_contract = "\n".join([f"{i+1}. {line}" for i, line in enumerate(lines)])
     evaluations = {}
@@ -104,17 +107,13 @@ async def evaluate(id: str, content) -> Evals:
 
         Do not output any additional text.
         """
-        output = llm.invoke(prompt).content
-
+        output = call_llm(prompt)
         try:
             evals = Evals(**json.loads(output[7:-3]))
             evaluations[title] = evals
         except Exception as e:
-            print(e)
-    print(evaluations)
-    data = await convert_to_mongo_format(evaluations)
-    db.update_one({"id": id}, {"$set": data}, upsert=True)
-    print("DONE")
+            print(f"Error parsing JSON: {e}")
+    transform_to_prisma_schema(id, evaluations)
     check_event.set()
 
 
@@ -122,8 +121,8 @@ async def evaluate(id: str, content) -> Evals:
 async def upload_file(file: UploadFile = File(...)):
     content = await file.read()
     id = str(uuid.uuid4())
-
-    asyncio.create_task(evaluate(id, content))
+    text = await extract_pdf_text(content)
+    asyncio.create_task(evaluate(text, id))
 
     return {
         "message": "Files uploaded successfully, agreement generation in progress.",
