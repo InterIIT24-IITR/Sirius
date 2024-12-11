@@ -1,6 +1,6 @@
 from pathway.xpacks.llm.vector_store import VectorStoreClient
 
-VECTOR_PORT = 8100
+VECTOR_PORT = 8225
 PATHWAY_HOST = "127.0.0.1"
 
 vector_client = VectorStoreClient(

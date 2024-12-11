@@ -17,11 +17,11 @@ data_sources.append(
     )
 )
 
-PATHWAY_PORT = 8100
+PATHWAY_PORT = 8225
 PATHWAY_HOST = "127.0.0.1"
 
 text_splitter = TokenCountSplitter(min_tokens=500, max_tokens=1000)
-embedder = SentenceTransformerEmbedder(model="Snowflake/snowflake-arctic-embed-l")
+embedder = SentenceTransformerEmbedder(model="paraphrase-MiniLM-L6-v2")
 parser = ParseUnstructured()
 
 vector_server = VectorStoreServer(

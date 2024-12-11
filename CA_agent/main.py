@@ -11,6 +11,7 @@ import PyPDF2
 import json
 import re
 import asyncio
+from swarm.util import debug_print
 
 check_event = asyncio.Event()
 RELEVANT_SECTIONS = [
@@ -29,23 +30,6 @@ client = pymongo.MongoClient(uri)
 db = client["CA_agent"]
 db = db["results"]
 app = FastAPI()
-
-
-def parse_response(response_string):
-    response_string = re.sub(r"\s+", " ", response_string).strip()
-    json_parts = re.findall(r"\{[^{}]*\}", response_string)
-    try:
-        parsed_parts = [json.loads(part) for part in json_parts]
-        parsed_data = {}
-        for part in parsed_parts:
-            parsed_data.update(part)
-
-        return parsed_data
-
-    except json.JSONDecodeError as e:
-        print(f"Error parsing JSON: {e}")
-        return None
-
 
 async def parse_pdf(docpath):
     with open(docpath, "rb") as f:
@@ -120,6 +104,7 @@ async def overall_handler(info_dict):
         response = await single_section_handler(info_dict, section)
         responses.append(response)
     temp = "\n\n".join(responses)
+    debug_print(True, "Final response consolidation")
     prompt_new = f"""
     You are a helpful AI agent.
     You were tasked with identifying which sections of the income tax act are applicable for tax deduction in context of a user who has given you documents related to the same.
@@ -135,8 +120,11 @@ async def overall_handler(info_dict):
         "probable_sections": ["80D", "80DD"]
     }}
     Also include a summary for each section as to why it may or may not be applicale to the user in a single line or two as a second JSON along with minimal calculations if possible. This information should be relevant to the user and not generic.
+    Do not include any additional text apart from the JSON output.
     """
     response = call_llm(prompt_new)
+    debug_print(True, "generated response")
+    debug_print(True, response)
     return response
 
 
@@ -146,7 +134,8 @@ async def evaluate(file_path, query, id):
     info_dict = await add_to_info(file_path, info_dict)
     info_dict["The user's description of their tax situation"] = query
     response = await overall_handler(info_dict)
-    response = parse_response(response)
+    debug_print(True, response)
+    response = json.loads(response[7:-3])
     db.update_one({"id": id}, {"$set": response}, upsert=True)
     check_event.set()
 
