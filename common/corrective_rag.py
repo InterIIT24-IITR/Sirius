@@ -3,8 +3,8 @@ from common.websearch import tavily_search
 from swarm.util import debug_print
 from concurrent.futures import ThreadPoolExecutor
 
-CORRECT_THRESHOLD = 0.6
-AMBIGUOUS_THRESHOLD = 0.3
+CORRECT_THRESHOLD = 0.4
+AMBIGUOUS_THRESHOLD = 0.2
 
 
 def corrective_rag(query, documents):

@@ -86,13 +86,10 @@ async def single_section_handler(info_dict, section):
     You also have the following response based on a multi-retrieval RAG-based process which has been crafted to assist you in this task:
     {response}
     Output a response that clearly mentions which sections of tax deduction are applicable to the user, and which sections aren't, and those which are ambiguous.
-    The response should be structured as a JSON input with the following format as an example:
-    {{
-        "applicable_sections": ["80C", "80CC", "80CCA"],
-        "non_applicable_sections": ["80CCF", "80CCG"],
-        "probable_sections": ["80D", "80DD"]
-    }}
-    Also include a summary for each section as to why it may or may not be applicale to the user in a single line or two as a second JSON along with minimal calculations if possible. This information should be relevant to the user and not generic.
+    The response should be structured as a JSON input structured as follows:
+    The JSON structure should include three keys: applicable_sections, non_applicable_sections, and probable_sections.
+    Each section should be represented as an array of objects with two keys: section (the tax section code) and summary (a brief explanation of the individual's eligibility or lack thereof)
+    This summary should be relevant to the user and not generic.
     """
     response = call_llm(prompt_new)
     return response
@@ -113,14 +110,11 @@ async def overall_handler(info_dict):
     You have generated the following responses for different groups of related sections:
     {temp}
     The last step is to combine all the responses into a single JSON output that clearly mentions which sections of tax deduction are applicable to the user, and which sections aren't, and those which are ambiguous.
-    The response should be structured as a JSON input with the following format as an example:
-    {{
-        "applicable_sections": ["80C", "80CC", "80CCA"],
-        "non_applicable_sections": ["80CCF", "80CCG"],
-        "probable_sections": ["80D", "80DD"]
-    }}
-    Also include a summary for each section as to why it may or may not be applicale to the user in a single line or two as a second JSON along with minimal calculations if possible. This information should be relevant to the user and not generic.
-    Do not include any additional text apart from the JSON output.
+    The response should be structured as a JSON input structured as follows:
+    The JSON structure should include three keys: applicable_sections, non_applicable_sections, and probable_sections.
+    Each section should be represented as an array of objects with two keys: section (the tax section code) and summary (a brief explanation of the individual's eligibility or lack thereof)
+    This summary should be relevant to the user and not generic.
+    Do NOT include any information other than the JSON output.
     """
     response = call_llm(prompt_new)
     debug_print(True, "generated response")

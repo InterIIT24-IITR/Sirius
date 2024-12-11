@@ -79,6 +79,8 @@ def metrag_score(document, query, agent, doc_):
 def metrag_filter(documents, query, agent):
     debug_print(True, f"Processing tool call: {metrag_filter.__name__}")
     with ThreadPoolExecutor() as executor:
+        if type(documents[0]) == str:
+            documents = [{"text": doc} for doc in documents]
         results = executor.map(lambda doc: metrag_score(doc["text"], query, agent, doc), documents)
     score_dict = [result for result in results]
     if len(score_dict) == 0:

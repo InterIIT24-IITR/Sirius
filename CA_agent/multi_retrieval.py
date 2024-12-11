@@ -4,23 +4,31 @@ from CA_agent.CA_client import retrieve_documents
 from common.plan_rag import plan_rag_query
 from common.plan_rag import single_plan_rag_step_query
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+from common.hyde import hyde_query
+from common.metrag import metrag_filter
+from common.corrective_rag import corrective_rag
 
 def single_retriever_CA_agent(query):
-    """For simple income tax related queries"""
+    """Answer simple tax deduction related queries by running them through HyDe and then retrieve the documents"""
 
-    documents = retrieve_documents(query)
-    # result = rerank_docs(query, documents)
+    modified_query = hyde_query(query)
+    documents = retrieve_documents(modified_query)
+    documents = metrag_filter(documents, query, "CA")
+    documents = corrective_rag(query, documents)
+    result = rerank_docs(modified_query, documents)
+    documents = [doc.document.text for doc in result.results]
+    context = "\n\n".join(documents)
 
-    documentlist = [doc["text"] for doc in documents][:3]
-    context = "\n\n".join(documentlist)
-
-    prompt = f"""You are a helpful chat assistant that helps create a summary of the following context: '{context}', in light of the query: '{query}'.
-                You must keep in mind that you are an expert in the field of chartered accountancy, and that the response you generate should be tailored accordingly.
+    prompt = f"""You are a helpful chat assistant that helps answer a query based on the given context.
+            The query is as follows:
+            {query}
+            The context provided to you is as follows:
+            {context}
+            Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
+            You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
-
-    response = call_llm(prompt)
-
+    
+    response = call_llm(prompt)  
     return documents, response
 
 
@@ -31,7 +39,7 @@ def step_executor(step):
 
 
 def multi_retrieval_CA_agent(query, sections, info_dict):
-    """Answer complex income tax related queries by running them through a multi-retrieval process based on PlanRAG"""
+    """Answer complex tax deduction queries by running them through a multi-retrieval process based on PlanRAG"""
 
     plan = plan_rag_query(
         query, "CA", userinfo=list(info_dict.keys()), section=sections
@@ -40,6 +48,7 @@ def multi_retrieval_CA_agent(query, sections, info_dict):
     resp_dict = {}
     documents = []
     response = []
+
     with ThreadPoolExecutor() as executor:
         futures = {
             executor.submit(step_executor, step): i
@@ -55,13 +64,17 @@ def multi_retrieval_CA_agent(query, sections, info_dict):
         documents.extend(dict_store[i])
         response.extend(resp_dict[i])
 
-    result = rerank_docs(query, documents)
+    modified_query = hyde_query(query)
+    documents = metrag_filter(documents, query, "CA")
+    documents = corrective_rag(query, documents)
+    result = rerank_docs(modified_query, documents)
 
     documents = [doc.document.text for doc in result.results]
 
     context_response = "\n\n".join(response)
     context_documents = "\n\n".join(documents)
     temp = "\n\n".join(info_dict.values())
+
     prompt = f"""You are a helpful chat assistant that helps answer a query based on the given context.
             The query is as follows:
             {query}
@@ -78,5 +91,4 @@ def multi_retrieval_CA_agent(query, sections, info_dict):
             """
 
     response = call_llm(prompt)
-
-    return response
+    return response,context_documents
