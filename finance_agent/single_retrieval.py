@@ -25,7 +25,6 @@ def single_retrieval_finance_agent(query):
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
             You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
-
-    response = call_llm(prompt)
-
-    return response
+    
+    response = call_llm(prompt)  
+    return response,context
