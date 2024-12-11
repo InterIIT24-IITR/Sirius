@@ -12,21 +12,31 @@ from fastapi import FastAPI, File, UploadFile, WebSocket
 import asyncio
 import uuid
 import io
+from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
+load_dotenv()
 check_event = asyncio.Event()
-uri = "mongodb://localhost:27017/"
+uri = os.getenv("MONGO_CONNECTION_STRING")
 client = pymongo.MongoClient(uri)
-db = client["flags"]
+db = client["conversationdb"]
 db = db["results"]
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-os.environ["OPENAI_API_KEY"]="sk-"
 
 class Eval(BaseModel):
-        item: str
-        is_met: int
-        explaination: str
-        reference : Optional[str]
+    item: str
+    is_met: int
+    explaination: str
+    reference: Optional[str]
+
 
 class Evals(BaseModel):
     evals: list[Eval]
@@ -44,6 +54,8 @@ async def convert_to_mongo_format(data):
         converted_data[category] = category_entry
 
     return converted_data
+
+
 async def extract_pdf_text(content: bytes) -> str:
     try:
         reader = PyPDF2.PdfReader(io.BytesIO(content))
@@ -54,11 +66,15 @@ async def extract_pdf_text(content: bytes) -> str:
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
+
 # def count_tokens(text):
 #     encoding = tiktoken.encoding_for_model("gpt-4o-mini")
 #     return len(encoding.encode(text))
 
-async def evaluate(text:str,id:str) -> Evals:
+
+async def evaluate(id: str, content) -> Evals:
+
+    text = await extract_pdf_text(content)
     global check_event
     llm = ChatOpenAI(model="gpt-4o-mini")
     lines = text.splitlines()
@@ -100,34 +116,30 @@ async def evaluate(text:str,id:str) -> Evals:
     db.update_one({"id": id}, {"$set": data}, upsert=True)
     print("DONE")
     check_event.set()
-    
+
 
 @app.post("/submit")
 async def upload_file(file: UploadFile = File(...)):
-    content = await file.read()   
+    content = await file.read()
     id = str(uuid.uuid4())
-    text = await extract_pdf_text(content)
-    asyncio.create_task(evaluate(text,id))
+
+    asyncio.create_task(evaluate(id, content))
 
     return {
         "message": "Files uploaded successfully, agreement generation in progress.",
         "conversation_id": id,
     }
 
+
 @app.websocket("/ws/check")
 async def check(ws: WebSocket):
     await ws.accept()
     global check_event
     while True:
-        await check_event.wait()  
-        await ws.send_json({"result": "OK"})  
+        await check_event.wait()
+        await ws.send_json({"result": "OK"})
         check_event.clear()
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8230)
-
-
-
-
-
