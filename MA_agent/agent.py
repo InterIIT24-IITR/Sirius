@@ -22,8 +22,7 @@ import uvicorn
 import pymongo
 from fastapi.middleware.cors import CORSMiddleware
 
-# Localhost
-uri = "mongodb://127.0.0.1:27017/"
+uri = "mongodb://localhost:27017"
 client = pymongo.MongoClient(uri)
 
 from pathway.xpacks.llm.vector_store import VectorStoreClient
@@ -89,7 +88,7 @@ def plan_to_queries(plan):
     return queries
 
 
-async def generate_agreement(company1, company2, id):
+async def generate_agreement(company1, company2, id, instructions):
     async def create_queries(output_doc):
         plan = plan_rag_query(
             query=None,
@@ -152,7 +151,7 @@ async def generate_agreement(company1, company2, id):
         output_doc = LIST_OF_DOCUMENTS_OUTPUT[idx // 2]
         tasks.append(
             generate_document(
-                output_doc, company1, company2, summaries[idx], summaries[idx + 1]
+                output_doc, company1, company2, summaries[idx], summaries[idx + 1], instructions
             )
         )
     debug_print(True, "Tasks 2")
@@ -162,7 +161,7 @@ async def generate_agreement(company1, company2, id):
         for output_doc, document in zip(LIST_OF_DOCUMENTS_OUTPUT, documents)
     }
     debug_print(True, "Final")
-    insights = await generate_insights(summaries, company1, company2)
+    insights = await generate_insights(summaries, company1, company2, instructions)
 
     await send_documents(output_to_document, insights, id)
 
@@ -172,6 +171,7 @@ async def ingest(
     company1: str = Form(...),  # Extract `company1` from form data
     company2: str = Form(...),  # Extract `company2` from form data
     files: List[UploadFile] = File(...),  # Extract `files` as a list of uploaded files
+    instructions: str = Form(...),  
 ):
     # Generate a unique ID for this request
     id = str(uuid.uuid4())
@@ -182,7 +182,7 @@ async def ingest(
         with open(file_location, "wb") as f:
             f.write(await file.read())
 
-    asyncio.create_task(generate_agreement(company1, company2, id))
+    asyncio.create_task(generate_agreement(company1, company2, id, instructions))
 
     # Return a response with the generated conversation ID
     return {
@@ -192,7 +192,7 @@ async def ingest(
 
 
 async def generate_document(
-    type, company1, company2, company1_details, company2_details
+    type, company1, company2, company1_details, company2_details, instructions
 ):
     prompt = DOCUMENT_PROMPT_MAPPING[type].format(
         company_a=company1,
@@ -200,6 +200,7 @@ async def generate_document(
         company_a_details=company1_details,
         company_b_details=company2_details,
         document_outline=DOCUMENT_OUTLINE_MAPPING[type],
+        instructions=instructions,
     )
     document = call_llm(prompt)
     return document
@@ -217,7 +218,7 @@ async def generate_summary(documents, doc_type, company_name):
 
 
 # Function to generate insights based on document headings
-async def generate_insights(summaries, company1, company2):
+async def generate_insights(summaries, company1, company2, instructions):
     company1_summary = " ".join(summary for summary in summaries[::2])
     company2_summary = " ".join(summary for summary in summaries[1::2])
     prompt = prompts.INSIGHTS_PROMPT.format(
@@ -225,6 +226,7 @@ async def generate_insights(summaries, company1, company2):
         company_b=company2,
         a_summary=company1_summary,
         b_summary=company2_summary,
+        instructions=instructions,
     )
     debug_print(True, "before llm")
     insights = call_llm(prompt)

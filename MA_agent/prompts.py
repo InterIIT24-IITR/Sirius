@@ -11,6 +11,9 @@ PROMPT_TERM_SHEET = """
 
 3. **Document Outline (Markdown format):**  
     {document_outline}
+    
+4. **Instructions:**
+    {instructions}
 
 **Task:**
 
@@ -30,6 +33,9 @@ PROMPT_DEFINITIVE_AGREEMENT = """
 
 3. **Document Outline (Markdown format):**  
     {document_outline}
+    
+4. **Instructions:**
+    {instructions}
 
 **Task:**
 
@@ -50,13 +56,16 @@ PROMPT_LETTER_OF_INTENT = """
 3. **Document Outline (Markdown format):**  
     {document_outline}
 
+4. **Instructions:**
+    {instructions}
+
 **Task:**
 
 Utilizing the inputs above, draft a Letter of Intent that aligns with the provided outline. This document should clearly express the intentions of both parties regarding the key aspects of the proposed transaction, including objectives, transaction structure, valuation, confidentiality, and any other preliminary terms. Ensure it is clearly formatted according to the specified Markdown outline.
 """
 
 PROMPT_NDA = """
-**Objective:** Write a Non-Disclosure Agreement to protect confidential information exchanged between {company_a} and {company_b} during the merger or acquisition discussions. Use the provided company details and the specified outline format.
+**Objective:** Write a Non-Disclosure Agreement to protect confidential information exchanged between {company_a} and {company_b} during the merger or acquisition discussions. Use the provided company details and the specified outline format. 
 
 **Inputs:**
 
@@ -69,6 +78,8 @@ PROMPT_NDA = """
 3. **Document Outline (Markdown format):**  
     {document_outline}
 
+4. **Instructions:**
+    {instructions}
 **Task:**
 
 Using the inputs above, draft a Non-Disclosure Agreement following the provided outline. This document should specify the obligations of both parties concerning the confidentiality of any proprietary information shared during the merger or acquisition process. Ensure to include key elements such as the definition of confidential information, duration of confidentiality, permitted disclosures, and any penalties for breaches. Format the NDA according to the specified Markdown outline.
@@ -88,6 +99,8 @@ PROMPT_DUE_DILIGENCE = """
 3. **Document Outline (Markdown format):**  
     {document_outline}
 
+4. **Instructions:**
+    {instructions}
 **Task:**
 
 Using the inputs above, draft a Due Diligence Request List following the provided outline. This document should detail all essential documents and information needed to thoroughly assess the business, financial, legal, and operational aspects of both companies. Ensure to cover all relevant categories, such as financial records, legal documents, intellectual property, contracts, regulatory compliance, and human resources. Format the request list according to the specified Markdown outline.
@@ -130,7 +143,7 @@ XYZ Corp's Due Diligence review highlights the XYZ Corp's being in strong financ
 
 
 INSIGHTS_PROMPT = """
-You are an expert analyst tasked with evaluating the potential merger/acquisition between {company_a} and {company_b}. Using the provided financial and legal documents, generate a comprehensive analysis focusing on the following key areas:
+You are an expert analyst tasked with evaluating the potential merger/acquisition between {company_a} and {company_b} following the important instructions {instructions}. Using the provided financial and legal documents, generate a comprehensive analysis focusing on the following key areas:
 
 1. **Financial Risk Assessment**: Evaluate the financial stability and risks associated with the merger/acquisition.
 2. **Operational Compatibility**: Assess how well the operational processes and systems of the two companies align.
