@@ -12,15 +12,23 @@ from fastapi import FastAPI, File, UploadFile, WebSocket
 import asyncio
 import uuid
 import io
+from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
+load_dotenv()
 check_event = asyncio.Event()
-uri = "mongodb://localhost:27017/"
+uri = os.getenv("MONGO_CONNECTION_STRING")
 client = pymongo.MongoClient(uri)
-db = client["flags"]
+db = client["conversationdb"]
 db = db["results"]
 app = FastAPI()
-
-os.environ["OPENAI_API_KEY"] = "sk-"
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class Eval(BaseModel):

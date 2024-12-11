@@ -1,3 +1,4 @@
+import asyncio
 import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import uvicorn
@@ -12,8 +13,9 @@ from common.evaluator import EnhancedRAGPipeline
 
 load_dotenv()
 
+
 try:
-    client = MongoClient(os.environ["MONGO_URI"])
+    client = MongoClient(os.environ["MONGO_CONNECTION_STRING"])
     client.admin.command("ping")
     print("MongoDB connected successfully!")
 except Exception as e:
@@ -30,8 +32,9 @@ app.add_middleware(
 
 
 async def handle_conversation(websocket: WebSocket, request: QueryRequest):
-    db = client["conversationdb"]
-    conversations_collection = db["conversations"]
+    db = client["sirius"]
+    conversations_collection = db["Message"]
+    print(request)
 
     try:
         if not request.id or request.id.strip() == "":
@@ -51,6 +54,7 @@ async def handle_conversation(websocket: WebSocket, request: QueryRequest):
                     "conversation": inserted_conversation,
                 }
             )
+            await asyncio.sleep(0.5)
 
             pipeline = EnhancedRAGPipeline()
             rag_response = pipeline.generate_response(request.query)
@@ -71,36 +75,11 @@ async def handle_conversation(websocket: WebSocket, request: QueryRequest):
             )
 
         else:
-            user_conversation = add_chat_to_conversation(
-                client, request.id, request.query, "USER"
-            )
+            rag_response = run_pipeline(request.query)
 
-            await websocket.send_json(
-                {
-                    "type": "request",
-                    "conversation": {
-                        "id": request.id,
-                        "title": user_conversation["title"],
-                        "chats": user_conversation["chats"],
-                    },
-                }
-            )
-            pipeline = EnhancedRAGPipeline()
-            rag_response = pipeline.generate_response(request.query)
-            updated_conversation = add_chat_to_conversation(
-                client, request.id, rag_response['final_response'], "RAG"
-            )
-
-            await websocket.send_json(
-                {
-                    "type": "response",
-                    "conversation": {
-                        "id": str(updated_conversation["_id"]),
-                        "title": updated_conversation["title"],
-                        "chats": updated_conversation["chats"],
-                    },
-                }
-            )
+            assistant_msg = add_chat_to_conversation(client, request.id, rag_response)
+            print(assistant_msg)
+            await websocket.send_json({"type": "response", "message": assistant_msg})
 
     except Exception as e:
         print(f"Conversation handling error: {e}")

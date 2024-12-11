@@ -1,7 +1,8 @@
+import datetime
 from typing import Literal
 from bson import ObjectId
 from pymongo import MongoClient
-
+from datetime import datetime, timezone
 from mongo.general.schema import PyMongoConversation
 
 
@@ -14,31 +15,30 @@ def create_conversation(client: MongoClient, conversation: PyMongoConversation):
 
 def add_chat_to_conversation(
     client: MongoClient,
-    conversation_id: str,
-    message: str,
-    role: Literal["USER", "RAG"],
+    chatId: str,
+    content: str,
+    role="ASSISTANT",
 ) -> dict:
-    db = client["conversationdb"]
-    conversations_collection = db["conversations"]
+    db = client["sirius"]
+    message_collection = db["Message"]
+    current_time = datetime.now(timezone.utc)
 
-    # Find the current conversation
-    conversation = conversations_collection.find_one({"_id": conversation_id})
-
-    if not conversation:
-        raise ValueError(f"Conversation with ID {conversation_id} not found")
-
-    # Calculate the next order (last order + 1)
-    current_chats = conversation.get("chats", [])
-    next_order = max([chat.get("order", 0) for chat in current_chats], default=0) + 1
-
-    # Create new chat
-    new_chat = {"message": message, "role": role, "order": next_order}
-
-    # Update the conversation with the new chat
-    result = conversations_collection.update_one(
-        {"_id": conversation_id}, {"$push": {"chats": new_chat}}
+    # Format the time string
+    response = message_collection.insert_one(
+        {
+            "chatId": ObjectId(chatId),
+            "content": content,
+            "role": role,
+            "createdAt": datetime.now(tz=timezone.utc),
+        }
     )
-
-    # Retrieve and return the updated conversation
-    updated_conversation = conversations_collection.find_one({"_id": conversation_id})
-    return updated_conversation
+    new_created_doc = message_collection.find_one({"_id": response.inserted_id})
+    chat_response = {
+        "id": str(new_created_doc["_id"]),
+        "chatId": str(new_created_doc["chatId"]),
+        "role": new_created_doc["role"],
+        "content": new_created_doc["content"],
+        "createdAt": str(new_created_doc["createdAt"]),
+    }
+    print(chat_response)
+    return chat_response
