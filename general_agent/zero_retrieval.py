@@ -8,5 +8,4 @@ def zero_retrieval_agent(query):
     """Answer extremely simple queries without any RAG-retrieval"""
 
     response = call_llm(query)
-
-    return response
+    return response,None

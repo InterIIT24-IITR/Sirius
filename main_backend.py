@@ -10,6 +10,7 @@ from backend.main_backend import QueryRequest
 from mongo.general.functions import add_chat_to_conversation, create_conversation
 from mongo.general.schema import PyMongoConversation
 from dotenv import load_dotenv
+from common.evaluator import EnhancedRAGPipeline
 
 load_dotenv()
 
@@ -71,11 +72,11 @@ async def handle_conversation(websocket: WebSocket, request: QueryRequest):
                     "conversation": inserted_conversation,
                 }
             )
-
-            rag_response = run_pipeline(request.query)
+            pipeline = EnhancedRAGPipeline()
+            rag_response = pipeline.generate_response(request.query)
 
             updated_conversation = add_chat_to_conversation(
-                client, str(inserted_conversation["_id"]), rag_response, "RAG"
+                client, str(inserted_conversation["_id"]), rag_response['final_response'], "RAG"
             )
 
             await websocket.send_json(
@@ -94,10 +95,11 @@ async def handle_conversation(websocket: WebSocket, request: QueryRequest):
                 client, request.id, request.query, "USER"
             )
 
-            rag_response = run_pipeline(request.query)
+            pipeline = EnhancedRAGPipeline()
+            rag_response = pipeline.generate_response(request.query)
 
             updated_conversation = add_chat_to_conversation(
-                client, request.id, rag_response, "RAG"
+                client, request.id, rag_response['final_response'], "RAG"
             )
 
             await websocket.send_json(

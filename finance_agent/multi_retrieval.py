@@ -81,4 +81,4 @@ def multi_retrieval_finance_agent(query):
     
     response = call_llm(prompt)
     
-    return response
+    return response,context_documents

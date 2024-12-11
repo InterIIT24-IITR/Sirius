@@ -27,8 +27,9 @@ def run_pipeline(query):
         return "Sorry we can't answer the request"
 
     response = client.run(agent=adarag_agent(), messages=messages, debug=True)
+    answer_context = response.messages[-2]["content"]
     answer = response.messages[-1]["content"]
-
+    context = answer_context[len(answer)+1:]
     messages += [
         {
             "role": "assistant",
@@ -39,10 +40,8 @@ def run_pipeline(query):
     safe, unsafe_category = guardrail(messages)
     if not safe:
         print(unsafe_category)
-        return "Sorry we can't answer the request"
-    
-    print(answer)
-    return answer
+        return "Sorry we can't answer the request" 
+    return answer,context
 
 
 if __name__ == "__main__":

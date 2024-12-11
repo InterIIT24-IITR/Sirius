@@ -25,6 +25,5 @@ def single_retrieval_finance_agent(query):
             You must keep in mind that you are an expert in the field of finance, and that the response you generate should be tailored accordingly.
             """
 
-    response = call_llm(prompt)
-
-    return response
+    response = call_llm(prompt)  
+    return response,context
