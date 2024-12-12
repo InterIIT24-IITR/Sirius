@@ -178,3 +178,47 @@ Please provide your insights in the form of a JSON object with the following str
 
 DO NOT wrap the output in ```json``` markdown
 """
+
+
+METRICS_PROMPT = """
+You are an expert analyst tasked with evaluating the potential merger/acquisition between {company_a} and {company_b} following the important instructions {instructions}. Using the provided financial, operational, and cultural data, generate a comprehensive evaluation focusing on the following key metrics:
+
+1. **Accountability & Oversight**: Rate the effectiveness of governance structures, leadership frameworks, and accountability mechanisms in the context of the merger/acquisition.
+2. **Ethical Standards**: Rate the alignment of ethical values and practices between the two companies.
+3. **Cultural Compatibility**: Rate the compatibility of cultural values, work environments, and organizational practices between the two companies.
+4. **Overall Alignment**: Provide an overall rating of how well the two companies align across all dimensions, including strategic objectives, values, and operational synergies.
+
+Each metric should be rated on a scale of **1 to 5**, where:
+- **1**: Very poor alignment or significant challenges.
+- **2**: Poor alignment with several issues to address.
+- **3**: Moderate alignment with some challenges.
+- **4**: Good alignment with minor challenges.
+- **5**: Excellent alignment with little to no challenges.
+
+Please provide your insights in the form of a JSON object with the following structure:
+
+{
+  "accountability_oversight": "Your rating here (1-5)",
+  "ethical_standards": "Your rating here (1-5)",
+  "cultural_compatibility": "Your rating here (1-5)",
+  "overall_alignment": "Your rating here (1-5)"
+}
+
+**Context:**
+
+- **{company_a}**: {a_summary}
+- **{company_b}**: {b_summary}
+
+---
+
+**Example Output:**
+
+{
+  "accountability_oversight": 3,
+  "ethical_standards": 4,
+  "cultural_compatibility": 2,
+  "overall_alignment": 3
+}
+
+DO NOT wrap the output in ```json``` markdown
+"""

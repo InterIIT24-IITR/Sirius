@@ -162,8 +162,9 @@ async def generate_agreement(company1, company2, id, instructions):
     }
     debug_print(True, "Final")
     insights = await generate_insights(summaries, company1, company2, instructions)
+    metrics = await generate_metrics(summaries, company1, company2, instructions)
 
-    await send_documents(output_to_document, insights, id)
+    await send_documents(output_to_document, insights, id, metrics)
 
 
 @app.post("/submit")
@@ -236,14 +237,27 @@ async def generate_insights(summaries, company1, company2, instructions):
 
     return insights
 
+async def generate_metrics(summaries, company1, company2, instructions):
+    company1_summary = " ".join(summary for summary in summaries[::2])
+    company2_summary = " ".join(summary for summary in summaries[1::2])
+    prompt = prompts.METRICS_PROMPT.format(
+        company_a=company1,
+        company_b=company2,
+        a_summary=company1_summary,
+        b_summary=company2_summary,
+        instructions=instructions,
+    )
+    metrics = call_llm(prompt)
+    return metrics
 
-async def send_documents(output_to_document, insights, conversation_id):
+async def send_documents(output_to_document, insights, conversation_id, metrics):
     # store the documents in the database using the mongo client and conversation_id
     global check_event
     db = client["conversationdb"]
     collection = db["documents"]
     output_to_document["insights"] = insights
     output_to_document["conversation_id"] = conversation_id
+    output_to_document["metrics"] = metrics
 
     collection.insert_one(output_to_document)
     check_event.set()
