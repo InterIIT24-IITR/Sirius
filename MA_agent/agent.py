@@ -22,7 +22,7 @@ import uvicorn
 import pymongo
 from fastapi.middleware.cors import CORSMiddleware
 
-uri = "mongodb://localhost:27017"
+uri = os.getenv("MONGO_CONNECTION_STRING")
 client = pymongo.MongoClient(uri)
 
 from pathway.xpacks.llm.vector_store import VectorStoreClient
@@ -35,17 +35,21 @@ vector_client = VectorStoreClient(
     port=VECTOR_PORT,
 )
 
+
 def retrieve_docs(query: str):
-    query_prefix = 'Represent this sentence for searching relevant passages: '
+    query_prefix = "Represent this sentence for searching relevant passages: "
     vector_results = vector_client.query(query_prefix + query, 10)
     results = []
     results.append(vector_results)
     return rerank_results(results)
 
+
 check_event = asyncio.Event()
+
 
 async def retrieve_and_process(query):
     return retrieve_docs(query)
+
 
 app = FastAPI()
 app.add_middleware(
@@ -134,9 +138,11 @@ async def generate_agreement(company1, company2, id, instructions):
         final_results.append(list(chain.from_iterable(documents)))
         start_idx += count
     debug_print(True, "Final results")
+
     async def create_summaries(documents, doc_type, company_name):
         summary = await generate_summary(documents, doc_type, company_name)
         return summary
+
     debug_print(True, "Summaries")
     tasks = []
     for idx, output_doc in enumerate(LIST_OF_DOCUMENTS_OUTPUT):
@@ -151,7 +157,12 @@ async def generate_agreement(company1, company2, id, instructions):
         output_doc = LIST_OF_DOCUMENTS_OUTPUT[idx // 2]
         tasks.append(
             generate_document(
-                output_doc, company1, company2, summaries[idx], summaries[idx + 1], instructions
+                output_doc,
+                company1,
+                company2,
+                summaries[idx],
+                summaries[idx + 1],
+                instructions,
             )
         )
     debug_print(True, "Tasks 2")
@@ -172,7 +183,7 @@ async def ingest(
     company1: str = Form(...),  # Extract `company1` from form data
     company2: str = Form(...),  # Extract `company2` from form data
     files: List[UploadFile] = File(...),  # Extract `files` as a list of uploaded files
-    instructions: str = Form(...),  
+    instructions: str = Form(...),
 ):
     # Generate a unique ID for this request
     id = str(uuid.uuid4())
@@ -237,6 +248,7 @@ async def generate_insights(summaries, company1, company2, instructions):
 
     return insights
 
+
 async def generate_metrics(summaries, company1, company2, instructions):
     company1_summary = " ".join(summary for summary in summaries[::2])
     company2_summary = " ".join(summary for summary in summaries[1::2])
@@ -251,11 +263,12 @@ async def generate_metrics(summaries, company1, company2, instructions):
     metrics = json.loads(metrics)
     return metrics
 
+
 async def send_documents(output_to_document, insights, conversation_id, metrics):
     # store the documents in the database using the mongo client and conversation_id
     global check_event
-    db = client["conversationdb"]
-    collection = db["documents"]
+    db = client["sirius"]
+    collection = db["MergerAcquisition"]
     output_to_document["insights"] = insights
     output_to_document["conversation_id"] = conversation_id
     output_to_document["metrics"] = metrics
