@@ -113,9 +113,35 @@ async def overall_handler(info_dict):
     The response should be structured as a JSON input structured as follows:
     The JSON structure should include three keys: applicable_sections, non_applicable_sections, and probable_sections.
     Each section should be represented as an array of objects with two keys: section (the tax section code) and summary (a brief explanation of the individual's eligibility or lack thereof)
+    Make sure the format of the JSON is as shown here:
+    {{
+        "applicable_sections": [
+    {{
+      "section": "80C",
+      "summary": "Allows deductions for investments in specified savings instruments up to ₹1.5 lakh."
+    }},
+    ...
+    
+  ],
+  "non_applicable_sections": [
+    {{
+      "section": "80CC",
+      "summary": "Generally not utilized or referenced by individual taxpayers."
+    }}
+    ...
+  ],
+  "probable_sections": [
+    {{
+      "section": "80GGA",
+      "summary": "Applicable if the user made donations for scientific research or rural development."
+    }}
+    ...
+  ]
+    }}
     This summary should be relevant to the user and not generic.
     Do NOT include any information other than the JSON output.
     """
+
     response = call_llm(prompt_new)
     debug_print(True, "generated response")
     debug_print(True, response)
