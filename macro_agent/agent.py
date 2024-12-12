@@ -14,13 +14,23 @@ from common.plan_rag import single_plan_rag_step_query
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from swarm.util import debug_print
 import asyncio
+import os
+from fastapi.middleware.cors import CORSMiddleware
 
 check_event = asyncio.Event()
-uri = "mongodb://localhost:27017/"
+uri = os.getenv("MONGO_CONNECTION_STRING")
 client = pymongo.MongoClient(uri)
-db = client["macro"]
-db = db["results"]
+db = client["sirius"]
+db = db["MacroAgent"]
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 def single_retriever_macro_agent(query):
     """For simple macro analysis queries, run them through HyDe and then retrieve the documents"""
@@ -43,10 +53,12 @@ def single_retriever_macro_agent(query):
 
     return documents, response
 
+
 def step_executor(step):
     query_ = single_plan_rag_step_query(step)
     documents, response = single_retriever_macro_agent(query_)
     return documents, response
+
 
 async def multi_retrieval_macro_agent(query, id):
     """Answer complex macro analysis related queries by running them through a multi-retrieval process based on PlanRAG"""
@@ -96,7 +108,7 @@ async def multi_retrieval_macro_agent(query, id):
             """
 
     response = call_llm(prompt)
-    db.update_one({"id": id}, {"$set": {"response" : response}}, upsert=True)
+    db.update_one({"MacroID": id}, {"$set": {"response": response}}, upsert=True)
     check_event.set()
 
 
