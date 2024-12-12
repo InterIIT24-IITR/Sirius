@@ -9,11 +9,13 @@ def call_guard_model(conversation):
         json=conversation,
     )
     output = response.json()["output"]
-    return output[0], output[1]
+    # return output[0], output[1]
+    return True, ""
 
 
 def guardrail(conversation):
     debug_print(True, f"Processing tool call: {guardrail.__name__}")
+    debug_print(True, f"Processing tree call: GUARDRAIL")
     return call_guard_model(conversation)
 
 

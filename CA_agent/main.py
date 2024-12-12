@@ -12,6 +12,7 @@ import json
 import re
 import asyncio
 from swarm.util import debug_print
+from fastapi.middleware.cors import CORSMiddleware
 
 check_event = asyncio.Event()
 RELEVANT_SECTIONS = [
@@ -25,11 +26,19 @@ RELEVANT_SECTIONS = [
 SAVE_DIR = "./uploadeddocs"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-uri = "mongodb://localhost:27017/"
+uri = os.getenv("MONGO_CONNECTION_STRING")
 client = pymongo.MongoClient(uri)
-db = client["CA_agent"]
-db = db["results"]
+db = client["sirius"]
+db = db["CA_agent"]
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 async def parse_pdf(docpath):
     with open(docpath, "rb") as f:
@@ -156,7 +165,7 @@ async def evaluate(file_path, query, id):
     response = await overall_handler(info_dict)
     debug_print(True, response)
     response = json.loads(response[7:-3])
-    db.update_one({"id": id}, {"$set": response}, upsert=True)
+    db.update_one({"CAID": id}, {"$set": response}, upsert=True)
     check_event.set()
 
 

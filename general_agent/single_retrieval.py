@@ -4,11 +4,12 @@ from common.reranker import rerank_docs
 from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from common.llm import call_llm
+from swarm.util import debug_print
 
 
 def single_retrieval_agent(query):
     """Answer simple queries by running them through HyDe and then retrieve the documents"""
-
+    debug_print(True, f"Processing tree call: SINGLE_RETRIEVAL")
     modified_query = hyde_query(query)
     documents = retrieve_documents(modified_query)
     documents = metrag_filter(documents, query, "general")

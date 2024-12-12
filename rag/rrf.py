@@ -1,6 +1,10 @@
+from swarm.util import debug_print
+
 K = 60
 
+
 def rerank_results(results: list[list[dict[any, any]]]):
+    debug_print(True, f"Processing tree call: RRF (K docs)")
     weights = [1 / len(results) for _ in range(len(results))]
     results_dict = {}
     text_to_result = {}
