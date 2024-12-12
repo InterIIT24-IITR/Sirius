@@ -1,6 +1,6 @@
 import os
 from common.llm import call_llm
-import PyPDF2
+from PyPDF2 import PdfReader
 import tiktoken
 from pydantic import BaseModel
 from typing import Optional
@@ -19,8 +19,8 @@ load_dotenv()
 check_event = asyncio.Event()
 uri = os.getenv("MONGO_CONNECTION_STRING")
 client = pymongo.MongoClient(uri)
-db = client["conversationdb"]
-db = db["results"]
+db = client["sirius"]
+db = db["FlagAgent"]
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -47,7 +47,7 @@ def transform_to_prisma_schema(id, evals):
 
     for category, evals in evals.items():
         result = {
-            "group _id": id,
+            "group_id": id,
             "category": category,
             "checklistRelevance": evals.checklist_relevance,
             "evaluations": [],
@@ -60,19 +60,21 @@ def transform_to_prisma_schema(id, evals):
                 "resultId": id,
                 "item": eval_item.item,
                 "isMet": eval_item.is_met,
-                "explanation": eval_item.explanation,
+                "explanation": eval_item.explaination,
                 "reference": eval_item.reference,
             }
             result["evaluations"].append(evaluation)
-        db.update_one({"id": id}, {"$set": result}, upsert=True)
+        db.update_one({"flagID": id}, {"$set": result}, upsert=True)
 
 
 async def extract_pdf_text(content: bytes) -> str:
     try:
-        reader = PyPDF2.PdfReader(io.BytesIO(content))
+        # reader = PyPDF2.PdfFileReader
+        reader = PdfReader(io.BytesIO(content))
         text = ""
         for page in reader.pages:
             text += page.extract_text() + "\n"
+
         return text
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
@@ -122,6 +124,8 @@ async def upload_file(file: UploadFile = File(...)):
     content = await file.read()
     id = str(uuid.uuid4())
     text = await extract_pdf_text(content)
+    print(text)
+    db.update_one({"flagID": id}, {"$set": {"file": text}}, upsert=True)
     asyncio.create_task(evaluate(text, id))
 
     return {

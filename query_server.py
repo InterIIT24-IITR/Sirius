@@ -74,7 +74,9 @@ async def handle_conversation(websocket: WebSocket, request: QueryRequest):
 
         else:
             rag_response = run_pipeline(request.query)
+            from swarm.util import debug_print
 
+            debug_print(True, f"Processing tree call: Final RAG Response")
             assistant_msg = add_chat_to_conversation(client, request.id, rag_response)
             print(assistant_msg)
             await websocket.send_json({"type": "response", "message": assistant_msg})

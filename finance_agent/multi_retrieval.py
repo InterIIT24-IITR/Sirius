@@ -7,6 +7,7 @@ from common.plan_rag import single_plan_rag_step_query
 from common.metrag import metrag_filter
 from common.corrective_rag import corrective_rag
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from swarm.util import debug_print
 
 
 def single_retriever_finance_agent(query):
@@ -38,7 +39,7 @@ def step_executor(step):
 
 def multi_retrieval_finance_agent(query):
     """Answer complex finance related queries by running them through a multi-retrieval process based on PlanRAG"""
-
+    debug_print(True, f"Processing tree call: MULTI_RETRIEVAL")
     plan = plan_rag_query(query, "finance")
     dict_store = {}
     resp_dict = {}

@@ -9,6 +9,7 @@ AMBIGUOUS_THRESHOLD = 0.4
 
 def corrective_rag(query, documents):
     debug_print(True, f"Processing tool call: {corrective_rag.__name__}")
+    debug_print(True, f"Processing tree call: CRAG")
     total_score = 0
     doc_length = len(documents)
 

@@ -14,6 +14,7 @@ def call_guard_model(conversation):
 
 def guardrail(conversation):
     debug_print(True, f"Processing tool call: {guardrail.__name__}")
+    debug_print(True, f"Processing tree call: GUARDRAIL")
     return call_guard_model(conversation)
 
 

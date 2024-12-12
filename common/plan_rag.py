@@ -1,10 +1,11 @@
 from common.llm import call_llm
 from swarm.util import debug_print
 
+
 def plan_rag_query(query, agent="finance", **kwargs):
     debug_print(True, f"Processing tool call: {plan_rag_query.__name__}")
-    
-    if agent=="macro":
+    debug_print(True, f"Processing tree call: PLAN_RAG")
+    if agent == "macro":
         plan_query = call_llm(
             f"""
             You are a helpful AI agent.
@@ -54,13 +55,13 @@ def plan_rag_query(query, agent="finance", **kwargs):
         """
         plan_query = call_llm(prompt)
         return plan_query
-    
+
     if agent == "CA":
         userinfo = kwargs.get("userinfo")
         if userinfo is None:
             userinfo = "You do not have any user information."
         section = kwargs.get("section")
-        userinfo_str = "\n\n".join(userinfo) 
+        userinfo_str = "\n\n".join(userinfo)
         prompt = f"""
         You are a helpful AI agent.
         You are tasked with writing a detailed step-by-step plan to answer the query '{query}' for a user.
@@ -81,8 +82,10 @@ def plan_rag_query(query, agent="finance", **kwargs):
     if agent == "finance":
         expertise = "You are an expert in the field of finance. Your answer should be tailored accordingly."
     elif agent == "legal":
-        expertise = "You are a legal expert. Your answer should be tailored accordingly."
-    
+        expertise = (
+            "You are a legal expert. Your answer should be tailored accordingly."
+        )
+
     plan_query = call_llm(
         f"""
         You are a helpful AI agent.
