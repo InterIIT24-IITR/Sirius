@@ -248,6 +248,7 @@ async def generate_metrics(summaries, company1, company2, instructions):
         instructions=instructions,
     )
     metrics = call_llm(prompt)
+    metrics = json.loads(metrics)
     return metrics
 
 async def send_documents(output_to_document, insights, conversation_id, metrics):
