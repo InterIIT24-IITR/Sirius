@@ -11,5 +11,5 @@ def transfer_to_general_agent() -> Agent:
     return Agent(
         name="General Agent",
         instructions="You are an expert at routing queries to a zero, single or multi-retrieval agent based on the complexity of the query. Since you are domain agnostic, route the queries based on whether or not the query requires zero, single or multiple RAG steps.",
-        functions=[single_retrieval_agent, multi_retrieval_agent],
+        functions=[zero_retrieval_agent,single_retrieval_agent, multi_retrieval_agent],
     )

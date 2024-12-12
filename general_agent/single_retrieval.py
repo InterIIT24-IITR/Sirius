@@ -26,6 +26,5 @@ def single_retrieval_agent(query):
             Do not use outside knowledge to answer the query. If the answer is not contained in the provided information, just say that you don't know, don't try to make up an answer.
             """
 
-    response = call_llm(prompt)
-
-    return response
+    response = call_llm(prompt) 
+    return response,context
