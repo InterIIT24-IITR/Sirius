@@ -197,28 +197,17 @@ Each metric should be rated on a scale of **1 to 5**, where:
 
 Please provide your insights in the form of a JSON object with the following structure:
 
-{
+{{
   "accountability_oversight": "Your rating here (1-5)",
   "ethical_standards": "Your rating here (1-5)",
   "cultural_compatibility": "Your rating here (1-5)",
   "overall_alignment": "Your rating here (1-5)"
-}
+}}
 
 **Context:**
 
 - **{company_a}**: {a_summary}
 - **{company_b}**: {b_summary}
-
----
-
-**Example Output:**
-
-{
-  "accountability_oversight": 3,
-  "ethical_standards": 4,
-  "cultural_compatibility": 2,
-  "overall_alignment": 3
-}
 
 DO NOT wrap the output in ```json``` markdown
 """
