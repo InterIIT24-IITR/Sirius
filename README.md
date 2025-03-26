@@ -6,7 +6,7 @@ A powerful, AI-driven assistant for legal and financial queries, leveraging Path
 3. **Contract Review Agent**: Analyzes legal contracts, flagging suspicious or risky terms for your review.
 4. **Market Insights Agent**: Conducts competitive market analysis, offering actionable insights for strategic decision-making.
 
-Along with these specialized agents, it contains a tailored pipelines for legal and financial queries along with a general pipeline for all your daily needs.
+Along with these specialized agents, it contains tailored pipelines for legal and financial queries along with a general pipeline for all your daily needs.
 Efficient, accurate, and built to save you time and effort.
 
 ## Directory Structure
